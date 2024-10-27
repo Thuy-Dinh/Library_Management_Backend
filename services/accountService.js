@@ -1,5 +1,5 @@
 const AccountModel = require("../models/Account");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 let checkAccountEmail = (accountEmail) => {
     console.log(accountEmail);
