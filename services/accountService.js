@@ -30,7 +30,7 @@ exports.handleUserLogin = async(email, password) => {
             if (isExist) {
                 let account = await AccountModel.findOne(
                     { Email: email },  // Điều kiện tìm kiếm
-                    { _id: 1, Email: 1, Name: 1, Password: 1 }  // Các trường bạn muốn lấy
+                    { _id: 1, Email: 1, Name: 1, Password: 1, Role: 1 }  // Các trường bạn muốn lấy
                 );                
 
                 if (account) {
@@ -58,4 +58,8 @@ exports.handleUserLogin = async(email, password) => {
             reject(e);
         }
     });
+}
+
+exports.getAllUserSV = async() => {
+    return AccountModel.find({Role: 'user'});
 }

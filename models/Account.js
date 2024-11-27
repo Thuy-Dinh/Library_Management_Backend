@@ -7,7 +7,12 @@ const AccountSchema = new mongoose.Schema({
     Name: String,
     Gender: String,
     Age: Number,
-    Role: String
+    Role: String,
+    State: String, 
+    Address: String,
+    Phone: String,
+    FrontImage: String,
+    BackImage: String
 });
 
 module.exports = mongoose.model('Account', AccountSchema);
