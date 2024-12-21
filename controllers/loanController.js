@@ -69,3 +69,20 @@ exports.getALoan = async (req, res) => {
         return res.status(500).json({ error: "Đã xảy ra lỗi trong hệ thống" });
     }
 };
+
+exports.acceptLoan = async (req, res) => {
+    try {
+        const { loanID, state }  = req.body; 
+
+        if (!loanID || !state) {
+            return res.status(400).json({ error: "Trường loanID là bắt buộc" });
+        }
+
+        const loan = await loanService.acceptLoanSV(loanID, state);
+
+        return res.status(200).json({ loan });
+    } catch (err) {
+        console.error("Lỗi trong acceptLoan: ", err.message);
+        return res.status(500).json({ error: "Đã xảy ra lỗi trong hệ thống" });
+    }
+}

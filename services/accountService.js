@@ -63,3 +63,7 @@ exports.handleUserLogin = async(email, password) => {
 exports.getAllUserSV = async() => {
     return AccountModel.find({Role: 'user'});
 }
+
+exports.getAUserSV = async(id) => {
+    return await AccountModel.findOne({ _id: id });
+}

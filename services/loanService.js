@@ -71,23 +71,40 @@ exports.createLoan = async (userEmail, bookID, phone, address, countDay, frontIm
     }
 };
 
-exports.getAllLoanSV = async (userEmail) => {
+exports.getAllLoanSV = async (userEmail) => { 
     try {
         const user = await User.findOne({ Email: userEmail });
         if (!user) {
             throw new Error("Người dùng không tồn tại");
         }
 
-        const loans = await Loan.find({ AccountID: user._id });
+        const role = user.Role;
 
-        // Format DayStart và DayEnd
-        const formattedLoans = loans.map((loan) => ({
-            ...loan._doc, // Bảo toàn các trường khác
-            DayStart: format(new Date(loan.DayStart), "dd/MM/yyyy"),
-            DayEnd: format(new Date(loan.DayEnd), "dd/MM/yyyy"),
-        }));
+        if (role == "user") {
+            const loans = await Loan.find({ AccountID: user._id })
+                .sort({ LoanID: -1 });
 
-        return formattedLoans;
+            // Đảm bảo trả về ngày theo định dạng ISO string
+            const formattedLoans = loans.map((loan) => ({
+                ...loan._doc, // Bảo toàn các trường khác
+                DayStart: loan.DayStart.toISOString(),  // Định dạng dưới dạng ISO string
+                DayEnd: loan.DayEnd.toISOString(),     // Định dạng dưới dạng ISO string
+            }));
+
+            return formattedLoans;
+        } else if (role == "admin") {
+            const loans = await Loan.find({})
+                .sort({ LoanID: -1 });
+
+            // Đảm bảo trả về ngày theo định dạng ISO string
+            const formattedLoans = loans.map((loan) => ({
+                ...loan._doc, // Bảo toàn các trường khác
+                DayStart: loan.DayStart.toISOString(),  // Định dạng dưới dạng ISO string
+                DayEnd: loan.DayEnd.toISOString(),     // Định dạng dưới dạng ISO string
+            }));
+
+            return formattedLoans;
+        }    
     } catch (err) {
         console.error("Lỗi trong loanService.getAllLoanSV: ", err.message);
         throw err;
@@ -102,3 +119,66 @@ exports.getALoanSV = async (loanID) => {
         throw err;
     }
 };
+
+exports.acceptLoanSV = async(loanID, state) => {
+    try {
+        const loan = await Loan.findOne({ _id: loanID });
+        if (!loan) {
+            throw new Error("Loan không tồn tại");
+        }
+
+        if(state == "Yêu cầu mượn") {
+            loan.State = "Đang mượn";
+            
+            // Lấy số ngày mượn từ dữ liệu cũ
+            const oldDayStart = new Date(loan.DayStart);
+            const oldDayEnd = new Date(loan.DayEnd);
+
+            if (!oldDayStart || !oldDayEnd || isNaN(oldDayStart) || isNaN(oldDayEnd)) {
+                throw new Error("DayStart hoặc DayEnd cũ không hợp lệ");
+            }
+
+            // Tính số ngày mượn
+            const diffTime = Math.abs(oldDayEnd - oldDayStart); // Thời gian chênh lệch (ms)
+            const countDayBorrowed = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const nowUTC = new Date();
+            loan.DayStart = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000); // Giờ Việt Nam (UTC+7)
+
+            // Tính ngày kết thúc
+            loan.DayEnd = new Date(loan.DayStart);
+            loan.DayEnd.setDate(loan.DayEnd.getDate() + countDayBorrowed);
+            const book = await Book.findOne({ _id: loan.BookID });
+            book.Availability = "Available";
+            book.CountBorrow += 1;
+
+            await loan.save();
+            await book.save();
+
+            return loan;
+        } else if(state == "Đang mượn") {
+            loan.State = "Đã trả";
+            const nowUTC = new Date();
+            loan.DayEnd = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000);
+            const book = await Book.findOne({ _id: loan.BookID });
+            book.Availability = "Available";
+
+            await loan.save();
+            await book.save();
+
+            return loan;
+        } else if(state == "Từ chối") {
+            loan.State = "Đã từ chối";
+            const book = await Book.findOne({ _id: loan.BookID });
+            book.Availability = "Available";
+
+            await loan.save();
+            await book.save();
+
+            return loan;
+        }  
+    } catch (err) {
+        console.error("Lỗi trong loanService.acceptLoanSV: ", err.message);
+        throw err;
+    }
+}

@@ -1,7 +1,12 @@
 const express = require("express");
 const upload = require("../multer"); // Import multer middleware
 
-const { createLoan, getAllLoan, getALoan } = require("../controllers/loanController");
+const { 
+    createLoan, 
+    getAllLoan, 
+    getALoan,
+    acceptLoan
+} = require("../controllers/loanController");
 
 const router = express.Router();
 
@@ -13,5 +18,7 @@ router.post('/create-loan', upload.fields([
 
 router.post('/all-loan', getAllLoan)
 router.get('/loan-detail/:id', getALoan);
+
+router.post('/accept-loan', acceptLoan)
 
 module.exports = router;

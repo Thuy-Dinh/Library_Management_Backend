@@ -86,3 +86,60 @@ exports.getAllBook = async (req, res) => {
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+exports.createBook = async (req, res) => {
+    try {
+        const { title, author, topic, subcaterory, tag, publisher, publication_year, edition, summary, language, cover } = req.body;
+
+        // Lấy BookID cao nhất từ cơ sở dữ liệu
+        const lastBook = await Book.findOne().sort({ BookID: -1 }).exec();
+        const newBookID = lastBook ? lastBook.BookID + 1 : 1; // Nếu không có sách nào, bắt đầu từ 1
+
+        const bookData = {
+            BookID: newBookID, // Gán BookID mới
+            Title: title,
+            Author: author,
+            Topic: topic,
+            Subcaterory: subcaterory,
+            Tag: tag,
+            Publisher: publisher,
+            Publication_year: publication_year,
+            Edition: edition,
+            Summary: summary,
+            Language: language,
+            Cover: cover,
+            Availability: 'Available', // Mặc định là 'Available'
+            Rating: 5, // Mặc định là 5
+            CountBorrow: 0 // Mặc định là 0
+        };
+
+        // Gọi hàm tạo sách trong bookService
+        const book = await bookService.createBookSV(bookData);
+
+        if (!book) {
+            return res.status(200).json({ success: true, data: [] });
+        } else {
+            return res.status(200).json({ success: true, data: book });
+        }
+    } catch (error) {
+        console.error("Error creating book:", error);
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+exports.getAllTopic = async (req, res) => {
+    try {
+        const allTopic = await bookService.getAllTopicSV();
+        console.log(allTopic);
+
+        if (!allTopic) {
+            return res.status(200).json({ success: true, data: [] });
+        } else {
+            return res.status(200).json({ success: true, data: allTopic });
+        }
+
+    } catch (error) {
+        console.error("Error fetching all topics:", error);
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+};

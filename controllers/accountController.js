@@ -54,3 +54,28 @@ exports.getAllUser = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.getAUser = async (req, res) => {
+    const id = req.body.id;
+
+    try {
+        if (!id) {
+            return res.status(500).json({
+                errCode: 1,
+                message: 'Các trường dữ liệu không được để trống!'
+            });
+        }
+
+        const user = await accountService.getAUserSV(id);
+
+        if (!user) {
+            return res.status(200).json({});
+        } else {
+            return res.status(200).json({ user });
+        }
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+};

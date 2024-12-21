@@ -33,4 +33,30 @@ exports.getAllBookSV = async () => {
     }
 };
 
+exports.createBookSV = async (bookData) => {
+    try {
+        // Tạo sách mới với dữ liệu đã bao gồm các giá trị mặc định
+        const newBook = new BookModel(bookData);
+
+        // Lưu sách vào cơ sở dữ liệu
+        const savedBook = await newBook.save();
+        return savedBook;
+    } catch (error) {
+        console.error("Error saving book:", error);
+        throw new Error("Error saving book");
+    }
+};
+
+exports.getAllTopicSV = async () => {
+    try {
+        const topics = await BookModel.aggregate([
+            { $group: { _id: "$Topic" } }, // Nhóm theo trường `Topic`
+            { $project: { _id: 0, Topic: "$_id" } } // Chỉ lấy giá trị `Topic`
+        ]);
+        return topics.map(item => item.Topic); // Trả về mảng các `Topic`
+    } catch (error) {
+        console.error("Error in getAllTopicSV:", error);
+        throw error;
+    }
+};
 
