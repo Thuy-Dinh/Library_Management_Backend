@@ -4,8 +4,11 @@ const BookSchema = new mongoose.Schema({
     BookID: Number,
     Title: String,
     Author: String,
-    Topic: String,
-    Subcaterory: String,
+    Category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category'
+    },
+    Subcategory: String,
     Tag: String,
     Publisher: String,
     Publication_year: Number,

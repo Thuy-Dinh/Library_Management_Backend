@@ -1,6 +1,83 @@
 const jwt = require('jsonwebtoken');
 const accountService = require("../services/accountService");
-const AccountSchema = require("../models/Account");
+
+exports.confirmEmail = async (req, res) => {
+    const { token } = req.params;
+
+    try {
+        const decoded = jwt.verify(token, 'hii'); // Thay bằng khóa bí mật
+        const account = await AccountModel.findOne({ _id: decoded.userId, Email: decoded.email });
+
+        if (!account) {
+            return res.status(400).json({
+                errCode: 1,
+                message: "Xác nhận không hợp lệ hoặc tài khoản không tồn tại.",
+            });
+        }
+
+        if (account.State === "Active") {
+            return res.status(200).json({
+                errCode: 0,
+                message: "Tài khoản đã được kích hoạt trước đó.",
+            });
+        }
+
+        account.State = "Active";
+        await account.save();
+
+        return res.status(200).json({
+            errCode: 0,
+            message: "Tài khoản đã được kích hoạt thành công.",
+        });
+    } catch (e) {
+        console.error(e);
+        return res.status(400).json({
+            errCode: 1,
+            message: "Liên kết xác nhận không hợp lệ hoặc đã hết hạn.",
+        });
+    }
+};
+
+exports.handleSignup = async (req, res) => {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+        return res.status(500).json({
+            errCode: 1,
+            message: 'Các trường dữ liệu không được để trống!'
+        });
+    }
+
+    try {
+        const accountData = await accountService.handleUserSignup(name, email, password);
+
+        if (accountData.errCode !== 0) {
+            return res.status(400).json({
+                errCode: accountData.errCode,
+                message: accountData.errMessage,
+            });
+        }
+
+        const token = jwt.sign(
+            { userId: accountData.account._id, email: accountData.account.Email },
+            process.env.JWT_SECRET || 'your_secret_key',
+            { expiresIn: '1h' }
+        );
+
+        return res.status(200).json({
+            errCode: accountData.errCode,
+            message: accountData.errMessage,
+            account: accountData.account,
+            token: token,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            errCode: 2,
+            message: 'Lỗi server, vui lòng thử lại sau!',
+        });
+    }
+};
 
 exports.handleLogin = async (req, res) => {
     const { email, password } = req.body;

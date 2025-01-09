@@ -1,23 +1,27 @@
 const BookModel = require("../models/Book");
+const CategoryModel = require("../models/Category");
 
-exports.bookDetail = async(bookID) => {
-    return await BookModel.findById({ _id: bookID });
+exports.bookDetailSV = async(bookID) => {
+    const book = await BookModel.findById({ _id: bookID });
+    console.log(book);
+    return book;
 }
 
-exports.proposeBook = async (bookID) => {
+exports.proposeBookSV = async (bookID) => {
     try {
-        const book = await BookModel.findById({_id: bookID});
-        
+        // Tìm sách theo ID
+        const book = await BookModel.findById({ _id: bookID }).populate('CategoryID');
         if (!book) {
             throw new Error('Không tìm thấy sách với ID đã cho');
         }
 
-        const sameTopicBooks = await BookModel.find({
-            Topic: book.Topic,   
+        // Tìm các sách cùng Category nhưng loại trừ sách hiện tại
+        const sameCategoryBooks = await BookModel.find({
+            CategoryID: book.CategoryID._id, // Sử dụng CategoryID để so sánh
             _id: { $ne: bookID } // Loại trừ sách hiện tại
-        });
+        }).populate('CategoryID'); // Thêm thông tin chi tiết về Category nếu cần
 
-        return sameTopicBooks;
+        return sameCategoryBooks;
     } catch (error) {
         console.error(error);
         throw new Error('Lỗi khi lấy danh sách sách đề xuất');
@@ -26,7 +30,8 @@ exports.proposeBook = async (bookID) => {
 
 exports.getAllBookSV = async () => {
     try {
-        return await BookModel.find({});
+        // Sử dụng populate để lấy thông tin Category thông qua CategoryID
+        return await BookModel.find({}).populate('Category');
     } catch (error) {
         console.error("Error in getAllBookSV:", error);
         throw error;
@@ -40,7 +45,17 @@ exports.createBookSV = async (bookData) => {
 
         // Lưu sách vào cơ sở dữ liệu
         const savedBook = await newBook.save();
-        return savedBook;
+
+        // Cập nhật số lượng sách trong Category
+        await CategoryModel.findByIdAndUpdate(
+            bookData.Category,  // Sử dụng Category ID đã được chuyển thành ObjectId
+            { $inc: { Quantity: 1 } },
+            { new: true } // Trả về đối tượng cập nhật
+        );
+
+        // Trả về sách đã được populate với Category
+        const populatedBook = await BookModel.findById(savedBook._id).populate('Category');
+        return populatedBook;
     } catch (error) {
         console.error("Error saving book:", error);
         throw new Error("Error saving book");
@@ -49,14 +64,27 @@ exports.createBookSV = async (bookData) => {
 
 exports.getAllTopicSV = async () => {
     try {
-        const topics = await BookModel.aggregate([
-            { $group: { _id: "$Topic" } }, // Nhóm theo trường `Topic`
-            { $project: { _id: 0, Topic: "$_id" } } // Chỉ lấy giá trị `Topic`
-        ]);
-        return topics.map(item => item.Topic); // Trả về mảng các `Topic`
+        return await CategoryModel.find({});
     } catch (error) {
         console.error("Error in getAllTopicSV:", error);
         throw error;
     }
 };
 
+exports.createTopicSV = async (topicData) => {
+    try {
+        // Tạo một Category mới
+        const newCategory = new CategoryModel({
+            Name: topicData.topic,
+            Quantity: 0, // Số lượng mặc định là 0
+        });
+
+        // Lưu Category mới vào cơ sở dữ liệu
+        const savedCategory = await newCategory.save();
+
+        return savedCategory;
+    } catch (error) {
+        console.error("Lỗi khi lưu chủ đề:", error);
+        throw new Error("Lỗi khi lưu chủ đề");
+    }
+};

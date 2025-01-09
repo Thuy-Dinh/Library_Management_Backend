@@ -7,7 +7,8 @@ const {
     proposeBook,
     getAllBook,
     createBook,
-    getAllTopic
+    getAllTopic,
+    createTopic
 } = require("../controllers/bookController");
 
 const router = express.Router();
@@ -22,6 +23,8 @@ router.get('/all-book', getAllBook);
 router.post('/create-book', createBook);
 
 router.get('/all-topic', getAllTopic);
+
+router.post('/create-topic', createTopic);
 
 module.exports = router;
 
