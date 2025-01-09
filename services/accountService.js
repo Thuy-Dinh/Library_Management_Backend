@@ -3,6 +3,25 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const AccountModel = require("../models/Account");
 
+let checkAccountEmail = (accountEmail) => {
+    console.log(accountEmail);
+    return new Promise(async (resolve, reject) => {
+        try {
+            let account = await AccountModel.findOne({ Email: accountEmail });
+
+            console.log(account);
+
+            if (account) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
 const sendConfirmationEmail = async (email, token) => {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -12,7 +31,7 @@ const sendConfirmationEmail = async (email, token) => {
         },
     });
 
-    const url = `http://localhost:3000/confirm-email/${token}`;
+    const url = "http://localhost:3000/confirm";
     await transporter.sendMail({
         to: email,
         subject: "Xác nhận tài khoản của bạn",
@@ -41,7 +60,7 @@ exports.handleUserSignup = async (name, email, password) => {
             Email: email,
             Name: name,
             Password: hashedPassword,
-            Role: "User",
+            Role: "user",
             State: "Request",
         });
 

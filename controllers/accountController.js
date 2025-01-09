@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
 const accountService = require("../services/accountService");
+const AccountModel = require("../models/Account");
 
 exports.confirmEmail = async (req, res) => {
-    const { token } = req.params;
+    const { token } = req.body;
 
     try {
-        const decoded = jwt.verify(token, 'hii'); // Thay bằng khóa bí mật
+        const decoded = jwt.verify(token, process.env.JWT_SECRET); // Thay bằng khóa bí mật
         const account = await AccountModel.findOne({ _id: decoded.userId, Email: decoded.email });
 
         if (!account) {
@@ -60,7 +61,7 @@ exports.handleSignup = async (req, res) => {
 
         const token = jwt.sign(
             { userId: accountData.account._id, email: accountData.account.Email },
-            process.env.JWT_SECRET || 'your_secret_key',
+            process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
@@ -103,7 +104,7 @@ exports.handleLogin = async (req, res) => {
     // Tạo JWT token
     const token = jwt.sign(
         { userId: accountData.account._id, email: accountData.account.Email },
-        'your_secret_key', // Thay thế 'your_secret_key' bằng khóa bí mật của bạn
+        process.env.JWT_SECRET, 
         { expiresIn: '1h' } // Token hết hạn sau 1 giờ
     );
 
