@@ -32,6 +32,9 @@ app.use("/book", bookRouter);
 const loanRouter = require("./routes/loanRouters");
 app.use("/loan", loanRouter);
 
+const overviewRouter = require("./routes/overviewRouters");
+app.use("/overwiew", overviewRouter);
+
 // Kết nối MongoDB
 dotenv.config();
 const mongoose = require("mongoose");
