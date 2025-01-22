@@ -161,6 +161,66 @@ exports.createBook = async (req, res) => {
     }
 }
 
+exports.editBook = async (req, res) => {
+    try {
+        console.log(req.params);
+        const { id } = req.params;
+        const {
+            title, 
+            author, 
+            subcategory, 
+            tag,
+            publisher, 
+            publication_year, 
+            edition, 
+            summary, 
+            language,
+            cover
+        } = req.body;
+
+        const updatedBook = await bookService.editBookSV({
+            id,
+            title,
+            author,
+            subcategory,
+            tag,
+            publisher,
+            publication_year,
+            edition,
+            summary,
+            language,
+            cover,
+        });
+
+        if (!updatedBook) {
+            return res.status(500).json({ success: false, message: "Không thể chỉnh sửa sách" });
+        }
+
+        return res.status(200).json({ success: true, data: updatedBook });
+    } catch (error) {
+        console.error("Error editing book:", error);
+        return res.status(500).json({ success: false, message: "Lỗi máy chủ" });
+    }
+};
+
+exports.deleteBook = async (req, res) => {
+    try {
+        console.log(req.params);
+        const { bookID } = req.params; // Lấy bookID từ URL
+
+        const deletedBook = await bookService.deleteBookSV(bookID);
+
+        if (!deletedBook) {
+            return res.status(404).json({ success: false, message: "Sách không tồn tại" });
+        }
+
+        return res.status(200).json({ success: true, message: "Xóa sách thành công", data: deletedBook });
+    } catch (error) {
+        console.error("Error deleting book:", error);
+        return res.status(500).json({ success: false, message: "Lỗi máy chủ" });
+    }
+};
+
 exports.getAllTopic = async (req, res) => {
     try {
         // Lấy tất cả các chủ đề (topics)
@@ -209,5 +269,23 @@ exports.createTopic = async (req, res) => {
     } catch (error) {
         console.error("Lỗi khi tạo chủ đề:", error);
         return res.status(500).json({ success: false, message: "Lỗi máy chủ" });
+    }
+};
+
+exports.searchByCategory = async (req, res) => {
+    try {
+        const topic = req.query;
+        
+        const allBook = await bookService.searchByCategorySV(topic);
+
+        if (!allBook || allBook.length === 0) {
+            return res.status(200).json({ success: true, data: [] });
+        } else {
+            return res.status(200).json({ success: true, data: allBook });
+        }
+
+    } catch (error) {
+        console.error("Error fetching all topics:", error);
+        return res.status(500).json({ success: false, message: "Server error" });
     }
 };

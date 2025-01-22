@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const BookModel = require("../models/Book");
 const CategoryModel = require("../models/Category");
 
@@ -62,6 +63,66 @@ exports.createBookSV = async (bookData) => {
     }
 };
 
+exports.editBookSV = async ({
+    id,
+    title,
+    author,
+    subcategory,
+    tag,
+    publisher,
+    publication_year,
+    edition,
+    summary,
+    language,
+    cover
+}) => {
+    console.log(id,
+        title,
+        author,
+        subcategory,
+        tag,
+        publisher,
+        publication_year,
+        edition,
+        summary,
+        language);
+    try {
+        const updatedBook = await BookModel.findByIdAndUpdate(
+            id, // ID sách
+            {
+                Title: title, 
+                Author: author, 
+                Subcategory: subcategory, 
+                Tag: tag,
+                Publisher: publisher, 
+                Publication_year: publication_year, 
+                Edition: edition, 
+                Summary: summary, 
+                Language: language,
+                Cover: cover
+            },
+            { new: true } // Trả về tài liệu sau khi cập nhật
+        );
+
+        console.log(updatedBook);
+        return updatedBook;
+    } catch (error) {
+        console.error("Error updating book:", error);
+        throw new Error("Error updating book");
+    }
+};
+
+exports.deleteBookSV = async (bookID) => {
+    try {
+        // Xóa sách bằng ID
+        const deletedBook = await BookModel.findOneAndDelete({ _id: bookID });
+        return deletedBook; // Trả về tài liệu đã xóa hoặc null nếu không tìm thấy
+    } catch (error) {
+        console.error("Error deleting book:", error);
+        throw new Error("Error deleting book");
+    }
+};
+
 exports.getAllTopicSV = async () => {
     try {
         return await CategoryModel.find({});
@@ -86,5 +147,20 @@ exports.createTopicSV = async (topicData) => {
     } catch (error) {
         console.error("Lỗi khi lưu chủ đề:", error);
         throw new Error("Lỗi khi lưu chủ đề");
+    }
+};
+
+
+exports.searchByCategorySV = async (topic) => {
+    try {
+        // Kiểm tra nếu topic là ID
+        if (mongoose.Types.ObjectId.isValid(topic)) {
+            return await CategoryModel.findById(topic).populate('Books');
+        } 
+        // Nếu topic là tên
+        return await CategoryModel.findOne({ Name: new RegExp(topic, 'i') }).populate('Books');
+    } catch (error) {
+        console.error("Error in searchByCategorySV:", error);
+        throw error;
     }
 };
