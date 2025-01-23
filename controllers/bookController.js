@@ -205,7 +205,6 @@ exports.editBook = async (req, res) => {
 
 exports.deleteBook = async (req, res) => {
     try {
-        console.log(req.params);
         const { bookID } = req.params; // Lấy bookID từ URL
 
         const deletedBook = await bookService.deleteBookSV(bookID);
@@ -274,14 +273,20 @@ exports.createTopic = async (req, res) => {
 
 exports.searchByCategory = async (req, res) => {
     try {
-        const topic = req.query;
-        
-        const allBook = await bookService.searchByCategorySV(topic);
+        console.log(req.query);
+        const topics = req.query.topics ? JSON.parse(req.query.topics) : [req.query.category || Object.keys(req.query)[0]];
+        console.log("Topics received:", topics);
 
-        if (!allBook || allBook.length === 0) {
+        if (!topics || topics.length === 0) {
+            return res.status(400).json({ success: false, message: "No topics provided" });
+        }
+
+        const allBooks = await bookService.searchByCategorySV(topics);
+
+        if (!allBooks || allBooks.length === 0) {
             return res.status(200).json({ success: true, data: [] });
         } else {
-            return res.status(200).json({ success: true, data: allBook });
+            return res.status(200).json({ success: true, data: allBooks });
         }
 
     } catch (error) {

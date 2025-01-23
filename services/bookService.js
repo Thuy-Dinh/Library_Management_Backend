@@ -114,9 +114,18 @@ exports.editBookSV = async ({
 
 exports.deleteBookSV = async (bookID) => {
     try {
-        // Xóa sách bằng ID
+        // Tìm và xóa sách bằng ID
         const deletedBook = await BookModel.findOneAndDelete({ _id: bookID });
-        return deletedBook; // Trả về tài liệu đã xóa hoặc null nếu không tìm thấy
+
+        if (deletedBook) {
+            // Giảm số lượng sách trong Category
+            await CategoryModel.findByIdAndUpdate(
+                deletedBook.Category, // ID của category liên quan
+                { $inc: { Quantity: -1 } } // Giảm Quantity đi 1
+            );
+        }
+
+        return deletedBook; // Trả về sách đã xóa (hoặc null nếu không tìm thấy)
     } catch (error) {
         console.error("Error deleting book:", error);
         throw new Error("Error deleting book");
@@ -151,14 +160,21 @@ exports.createTopicSV = async (topicData) => {
 };
 
 
-exports.searchByCategorySV = async (topic) => {
+exports.searchByCategorySV = async (topics) => {
     try {
-        // Kiểm tra nếu topic là ID
-        if (mongoose.Types.ObjectId.isValid(topic)) {
-            return await CategoryModel.findById(topic).populate('Books');
-        } 
-        // Nếu topic là tên
-        return await CategoryModel.findOne({ Name: new RegExp(topic, 'i') }).populate('Books');
+        // Xử lý danh sách topics được truyền vào
+        const categoryObjects = await CategoryModel.find({ Name: { $in: topics.map(t => new RegExp(t, 'i')) } });
+        if (!categoryObjects || categoryObjects.length === 0) {
+            console.log("No categories found with the given topics.");
+            return [];
+        }
+
+        // Lấy danh sách _id của các category tìm được
+        const categoryIds = categoryObjects.map(category => category._id);
+
+        // Tìm sách thuộc một trong các category tìm được
+        const books = await BookModel.find({ Category: { $in: categoryIds } });
+        return books;
     } catch (error) {
         console.error("Error in searchByCategorySV:", error);
         throw error;
