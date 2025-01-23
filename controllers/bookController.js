@@ -255,7 +255,6 @@ exports.getAllTopic = async (req, res) => {
 
 exports.createTopic = async (req, res) => {
     const topic = req.body.topic;
-
     try {
         // Tạo topic mới bằng service
         const newTopic = await bookService.createTopicSV(topic);
@@ -291,6 +290,41 @@ exports.searchByCategory = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching all topics:", error);
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+exports.searchSuggestion = async (req, res) => {
+    try {
+        const { keyword } = req.query;
+
+        if (!keyword || keyword.trim() === '') {
+            return res.status(400).json({ error: 'Keyword is required' });
+        }
+
+        const results = await bookService.searchSuggestionSV(keyword);
+
+        return res.status(200).json({ success: true, data: results });
+    } catch (error) {
+        console.error("Error fetching suggestions:", error);
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+exports.searchResult = async (req, res) => {
+    try {
+        const { keyword } = req.query;
+
+        if (!keyword || keyword.trim() === '') {
+            return res.status(400).json({ error: 'Keyword is required' });
+        }
+
+        const results = await bookService.searchResultSV(keyword);
+        console.log(results);
+
+        return res.status(200).json({ success: true, data: results });
+    } catch (error) {
+        console.error("Error fetching suggestions:", error);
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };

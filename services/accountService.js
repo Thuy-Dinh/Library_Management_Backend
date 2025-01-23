@@ -22,7 +22,7 @@ let checkAccountEmail = (accountEmail) => {
     });
 };
 
-const sendConfirmationEmail = async (email, token) => {
+const sendConfirmationEmail = async (email) => {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -96,19 +96,24 @@ exports.handleUserLogin = async(email, password) => {
             if (isExist) {
                 let account = await AccountModel.findOne(
                     { Email: email },  // Điều kiện tìm kiếm
-                    { _id: 1, Email: 1, Name: 1, Password: 1, Role: 1 }  // Các trường bạn muốn lấy
+                    { _id: 1, Email: 1, Name: 1, Password: 1, Role: 1, State: 1 }  // Các trường bạn muốn lấy
                 );                
 
                 if (account) {
-                    let check = await bcrypt.compare(password, account.Password);
-                    if (check) {
-                        accountData.errCode = 0;
-                        accountData.errMessage = 'Ok';
-
-                        accountData.account = account;
+                    if(account.State === "Active") {
+                        let check = await bcrypt.compare(password, account.Password);
+                        if (check) {
+                            accountData.errCode = 0;
+                            accountData.errMessage = 'Ok';
+    
+                            accountData.account = account;
+                        } else {
+                            accountData.errCode = 3;
+                            accountData.errMessage = 'Sai mật khẩu';
+                        }
                     } else {
-                        accountData.errCode = 3;
-                        accountData.errMessage = 'Sai mật khẩu';
+                        accountData.errCode = 4;
+                        accountData.errMessage = 'Tài khoản chưa xác thực email. Vui lòng kiểm tra lại';
                     }
                 } else {
                     accountData.errCode = 2;

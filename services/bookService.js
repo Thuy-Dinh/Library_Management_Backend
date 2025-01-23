@@ -11,16 +11,16 @@ exports.bookDetailSV = async(bookID) => {
 exports.proposeBookSV = async (bookID) => {
     try {
         // Tìm sách theo ID
-        const book = await BookModel.findById({ _id: bookID }).populate('CategoryID');
+        const book = await BookModel.findById({ _id: bookID }).populate('Category');
         if (!book) {
             throw new Error('Không tìm thấy sách với ID đã cho');
         }
 
         // Tìm các sách cùng Category nhưng loại trừ sách hiện tại
         const sameCategoryBooks = await BookModel.find({
-            CategoryID: book.CategoryID._id, // Sử dụng CategoryID để so sánh
+            Category: book.Category._id, // Sử dụng CategoryID để so sánh
             _id: { $ne: bookID } // Loại trừ sách hiện tại
-        }).populate('CategoryID'); // Thêm thông tin chi tiết về Category nếu cần
+        }).populate('Category'); // Thêm thông tin chi tiết về Category nếu cần
 
         return sameCategoryBooks;
     } catch (error) {
@@ -177,6 +177,66 @@ exports.searchByCategorySV = async (topics) => {
         return books;
     } catch (error) {
         console.error("Error in searchByCategorySV:", error);
+        throw error;
+    }
+};
+
+exports.searchSuggestionSV = async (keyword) => {
+    try {
+        const suggestions = await BookModel.find()
+            .populate({
+                path: 'Category',
+                select: 'Name', // Chỉ lấy trường Name trong Category
+            })
+            .limit(10)
+            .exec();
+
+        // Lọc kết quả sau khi populate
+        const filteredSuggestions = suggestions.filter((book) => {
+            const titleMatch = book.Title?.toLowerCase().includes(keyword.toLowerCase());
+            const authorMatch = book.Author?.toLowerCase().includes(keyword.toLowerCase());
+            const categoryMatch = book.Category?.Name?.toLowerCase().includes(keyword.toLowerCase());
+
+            return titleMatch || authorMatch || categoryMatch;
+        });
+
+        return filteredSuggestions.map((book) => ({
+            Title: book.Title,
+            Author: book.Author,
+            Category: book.Category?.Name || null,
+        }));
+    } catch (error) {
+        console.error("Error in searchSuggestionSV:", error);
+        throw error;
+    }
+};
+
+exports.searchResultSV = async (keyword) => {
+    try {
+        const suggestions = await BookModel.find()
+            .populate({
+                path: 'Category',
+                select: 'Name', // Chỉ lấy trường Name trong Category
+            })
+            .limit(10)
+            .exec();
+
+        // Lọc kết quả sau khi populate
+        const filteredSuggestions = suggestions.filter((book) => {
+            const titleMatch = book.Title?.toLowerCase().includes(keyword.toLowerCase());
+            const authorMatch = book.Author?.toLowerCase().includes(keyword.toLowerCase());
+            const categoryMatch = book.Category?.Name?.toLowerCase().includes(keyword.toLowerCase());
+            const subcategoryMatch = book.Subcategory?.toLowerCase().includes(keyword.toLowerCase());
+            const tagMatch = book.Tag?.toLowerCase().includes(keyword.toLowerCase());
+
+            return titleMatch || authorMatch || categoryMatch || subcategoryMatch || tagMatch;
+        });
+
+        return filteredSuggestions.map((book) => ({
+            ...book.toObject(), // Trả về tất cả thông tin của tài liệu
+        }));
+    } catch (error) {
+        console.error("Error in searchSuggestionSV:", error);
         throw error;
     }
 };

@@ -11,7 +11,9 @@ const {
     deleteBook,
     getAllTopic,
     createTopic,
-    searchByCategory
+    searchByCategory,
+    searchSuggestion,
+    searchResult
 } = require("../controllers/bookController");
 
 const router = express.Router();
@@ -29,6 +31,8 @@ router.get('/delete-book/:bookID', deleteBook);
 
 router.get('/all-topic', getAllTopic);
 router.get('/topic-books', searchByCategory);
+router.get('/search-suggestions', searchSuggestion);
+router.get('/search-result', searchResult);
 
 router.post('/create-topic', createTopic);
 

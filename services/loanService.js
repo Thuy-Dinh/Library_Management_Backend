@@ -2,6 +2,7 @@ const Loan = require("../models/Loan");
 const User = require("../models/Account");
 const Book = require("../models/Book");
 const { format } = require("date-fns");
+const nodemailer = require("nodemailer");
 
 exports.createLoan = async (userEmail, bookID, phone, address, countDay, frontImage, backImage, note) => {
     try {
@@ -120,65 +121,118 @@ exports.getALoanSV = async (loanID) => {
     }
 };
 
-exports.acceptLoanSV = async(loanID, state) => {
+exports.acceptLoanSV = async (loanID, state) => {
     try {
-        const loan = await Loan.findOne({ _id: loanID });
+        // Tìm Loan và liên kết với Account thông qua AccountID
+        const loan = await Loan.findOne({ _id: loanID }).populate({
+            path: "AccountID", // Liên kết với Account
+            select: "Email Name" // Chỉ lấy trường Email và Name từ Account
+        }).populate({
+            path: "BookID", // Liên kết với Book
+            select: "Title" // Chỉ lấy tiêu đề sách
+        });
+
         if (!loan) {
             throw new Error("Loan không tồn tại");
         }
 
-        if(state == "Yêu cầu mượn") {
+        const userEmail = loan.AccountID.Email; // Lấy email từ Account
+        const userName = loan.AccountID.Name; // Lấy tên người dùng từ Account
+        const bookTitle = loan.BookID.Title; // Lấy tiêu đề sách từ Book
+
+        if (!userEmail) {
+            throw new Error("Không tìm thấy email người dùng");
+        }
+
+        let emailSubject = "";
+        let emailContent = "";
+
+        if (state === "Yêu cầu mượn") {
             loan.State = "Đang mượn";
-            
-            // Lấy số ngày mượn từ dữ liệu cũ
+
             const oldDayStart = new Date(loan.DayStart);
             const oldDayEnd = new Date(loan.DayEnd);
 
             if (!oldDayStart || !oldDayEnd || isNaN(oldDayStart) || isNaN(oldDayEnd)) {
-                throw new Error("DayStart hoặc DayEnd cũ không hợp lệ");
+                throw new Error("Ngày bắt đầu hoặc kết thúc không hợp lệ");
             }
 
-            // Tính số ngày mượn
-            const diffTime = Math.abs(oldDayEnd - oldDayStart); // Thời gian chênh lệch (ms)
+            const diffTime = Math.abs(oldDayEnd - oldDayStart);
             const countDayBorrowed = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
             const nowUTC = new Date();
-            loan.DayStart = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000); // Giờ Việt Nam (UTC+7)
-
-            // Tính ngày kết thúc
+            loan.DayStart = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000); // UTC+7
             loan.DayEnd = new Date(loan.DayStart);
             loan.DayEnd.setDate(loan.DayEnd.getDate() + countDayBorrowed);
+
             const book = await Book.findOne({ _id: loan.BookID });
-            book.Availability = "Available";
+            book.Availability = "Unavailable";
             book.CountBorrow += 1;
 
             await loan.save();
             await book.save();
 
-            return loan;
-        } else if(state == "Đang mượn") {
+            emailSubject = "Đơn mượn sách của bạn đã được duyệt!";
+            emailContent = `
+                Chào ${userName},
+                Đơn mượn sách của bạn với tiêu đề "${bookTitle}" đã được duyệt.
+                Ngày bắt đầu: ${loan.DayStart.toLocaleDateString()}.
+                Ngày kết thúc: ${loan.DayEnd.toLocaleDateString()}.
+                Chúc bạn đọc sách vui vẻ!
+            `;
+        } else if (state === "Từ chối") {
+            loan.State = "Đã từ chối";
+
+            const book = await Book.findOne({ _id: loan.BookID });
+            book.Availability = "Available";
+
+            await loan.save();
+            await book.save();
+
+            emailSubject = "Đơn mượn sách của bạn đã bị từ chối";
+            emailContent = `
+                Chào ${userName},
+                Rất tiếc, đơn mượn sách của bạn với tiêu đề "${bookTitle}" đã bị từ chối.
+                Vui lòng liên hệ quản trị viên nếu bạn có bất kỳ thắc mắc nào.
+                Xin cảm ơn!
+            `;
+        } else if (state === "Đang mượn") {
             loan.State = "Đã trả";
+
             const nowUTC = new Date();
             loan.DayEnd = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000);
+
             const book = await Book.findOne({ _id: loan.BookID });
             book.Availability = "Available";
 
             await loan.save();
             await book.save();
 
-            return loan;
-        } else if(state == "Từ chối") {
-            loan.State = "Đã từ chối";
-            const book = await Book.findOne({ _id: loan.BookID });
-            book.Availability = "Available";
+            emailSubject = "Đơn mượn sách của bạn đã hoàn tất";
+            emailContent = `
+                Chào ${userName},
+                Đơn mượn sách của bạn với tiêu đề "${bookTitle}" đã hoàn tất.
+                Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.
+            `;
+        }
 
-            await loan.save();
-            await book.save();
+        const transporter = nodemailer.createTransport({
+            service: 'gmail', 
+            auth: {
+                user: process.env.EMAIL_USER, 
+                pass: process.env.GMAIL_APP_PASSWORD  
+            }
+        });
+        
+        await transporter.sendMail({
+            to: userEmail,
+            subject: emailSubject,
+            text: emailContent
+        });
 
-            return loan;
-        }  
+        return loan;
     } catch (err) {
         console.error("Lỗi trong loanService.acceptLoanSV: ", err.message);
         throw err;
     }
-}
+};
