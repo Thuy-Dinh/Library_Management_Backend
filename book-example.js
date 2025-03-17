@@ -361,6 +361,24 @@ const additionalBookData = [
   }
 ];
 
+function generateBookCode(book) {
+  const removeDiacritics = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  
+  const getAcronym = (title) => {
+      return removeDiacritics(title)
+          .split(/\s+/) // Tách các từ
+          .map(word => word[0]?.toUpperCase()) // Lấy chữ cái đầu
+          .join(""); // Ghép lại
+  };
+
+  return `${getAcronym(book.Title)}${book.Publication_year}`;
+}
+
+const updatedBookData = additionalBookData.map(book => ({
+  ...book,
+  BookCode: generateBookCode(book)
+}));
+
 // Quá trình làm mới dữ liệu
 const refreshDatabase = async () => {
   try {
@@ -370,7 +388,7 @@ const refreshDatabase = async () => {
     console.log('All books and categories deleted!');
 
     // Tạo danh mục từ dữ liệu sách
-    const topics = [...new Set(additionalBookData.map(book => book.Topic))];
+    const topics = [...new Set(updatedBookData.map(book => book.Topic))];
     const categories = await Category.insertMany(
       topics.map(topic => ({
         Name: topic,
@@ -385,7 +403,7 @@ const refreshDatabase = async () => {
     });
 
     // Cập nhật dữ liệu sách
-    const booksWithCategory = additionalBookData.map(book => ({
+    const booksWithCategory = updatedBookData.map(book => ({
       ...book,
       Category: topicToCategoryMap[book.Topic]
     }));

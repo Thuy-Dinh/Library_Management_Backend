@@ -1,6 +1,45 @@
 const jwt = require('jsonwebtoken');
 const accountService = require("../services/accountService");
 const AccountModel = require("../models/Account");
+const nodemailer = require('nodemailer');
+
+const sendAccountDetailsEmail = async (email, account) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL_USER, 
+                pass: process.env.GMAIL_APP_PASSWORD, 
+            },
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Thông tin tài khoản của bạn",
+            html: `
+                <h2>Chúc mừng! Tài khoản của bạn đã được kích hoạt.</h2>
+                <p>Dưới đây là thông tin tài khoản của bạn:</p>
+                <ul>
+                    <li><strong>Mã thẻ bạn đọc:</strong> ${account.LbCode}</li>
+                    <li><strong>Tên:</strong> ${account.Name}</li>
+                    <li><strong>Email:</strong> ${account.Email}</li>
+                    <li><strong>Số CCCD:</strong> ${account.CCCDNumber}</li>
+                    <li><strong>Số điện thoại:</strong> ${account.Phone}</li>
+                    <li><strong>Địa chỉ:</strong> ${account.Address}</li>
+                    <li><strong>Tuổi:</strong> ${account.Age}</li>
+                    <li><strong>Giới tính:</strong> ${account.Gender}</li>
+                </ul>
+                <p>Vui lòng đăng nhập để sử dụng dịch vụ của chúng tôi.</p>
+            `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log("📧 Email đã được gửi thành công!");
+    } catch (error) {
+        console.error("❌ Lỗi khi gửi email:", error);
+    }
+};
 
 exports.confirmEmail = async (req, res) => {
     const { token } = req.body;
@@ -26,6 +65,8 @@ exports.confirmEmail = async (req, res) => {
         account.State = "Active";
         await account.save();
 
+        await sendAccountDetailsEmail(account.Email, account);
+
         return res.status(200).json({
             errCode: 0,
             message: "Tài khoản đã được kích hoạt thành công.",
@@ -40,9 +81,9 @@ exports.confirmEmail = async (req, res) => {
 };
 
 exports.handleSignup = async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, cccd, phone, address, age, gender } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !cccd || !phone || !address || !age || !gender) {
         return res.status(500).json({
             errCode: 1,
             message: 'Các trường dữ liệu không được để trống!'
@@ -50,7 +91,7 @@ exports.handleSignup = async (req, res) => {
     }
 
     try {
-        const accountData = await accountService.handleUserSignup(name, email, password);
+        const accountData = await accountService.handleUserSignup(name, email, password, cccd, phone, address, age, gender);
 
         if (accountData.errCode !== 0) {
             return res.status(400).json({
@@ -134,17 +175,17 @@ exports.getAllUser = async (req, res) => {
 };
 
 exports.getAUser = async (req, res) => {
-    const id = req.body.id;
+    const code = req.body.code;
 
     try {
-        if (!id) {
+        if (!code) {
             return res.status(500).json({
                 errCode: 1,
                 message: 'Các trường dữ liệu không được để trống!'
             });
         }
 
-        const user = await accountService.getAUserSV(id);
+        const user = await accountService.getAUserSV(code);
 
         if (!user) {
             return res.status(200).json({});

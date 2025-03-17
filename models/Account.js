@@ -11,8 +11,10 @@ const AccountSchema = new mongoose.Schema({
     State: String, 
     Address: String,
     Phone: String,
-    FrontImage: String,
-    BackImage: String
+    CCCDNumber: String,
+    LbCode: String
+    // FrontImage: String,
+    // BackImage: String
 });
 
 module.exports = mongoose.model('Account', AccountSchema);

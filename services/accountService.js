@@ -40,7 +40,7 @@ const sendConfirmationEmail = async (email) => {
     });
 };
 
-exports.handleUserSignup = async (name, email, password) => {
+exports.handleUserSignup = async (name, email, password, cccd, phone, address, age, gender) => {
     try {
         let accountData = {};
 
@@ -55,11 +55,21 @@ exports.handleUserSignup = async (name, email, password) => {
         let newAccountID = maxAccount ? maxAccount.AccountID + 1 : 1;
         let hashedPassword = await bcrypt.hash(password, 10);
 
+        let nameInitials = name.match(/\b\w/g).join('').toUpperCase(); 
+        let lastFiveCCCD = cccd.slice(-5); 
+        let lbCode = nameInitials + lastFiveCCCD; 
+
         let newAccount = await AccountModel.create({
             AccountID: newAccountID,
             Email: email,
             Name: name,
             Password: hashedPassword,
+            CCCDNumber: cccd,
+            Phone: phone,
+            Address: address,
+            Age: age,
+            Gender: gender,
+            LbCode: lbCode,
             Role: "user",
             State: "Request",
         });
@@ -96,7 +106,7 @@ exports.handleUserLogin = async(email, password) => {
             if (isExist) {
                 let account = await AccountModel.findOne(
                     { Email: email },  // Điều kiện tìm kiếm
-                    { _id: 1, Email: 1, Name: 1, Password: 1, Role: 1, State: 1 }  // Các trường bạn muốn lấy
+                    { _id: 1, Email: 1, Name: 1, Password: 1, Role: 1, State: 1, LbCode: 1 }  // Các trường bạn muốn lấy
                 );                
 
                 if (account) {
@@ -135,6 +145,11 @@ exports.getAllUserSV = async() => {
     return AccountModel.find({Role: 'user'});
 }
 
-exports.getAUserSV = async(id) => {
-    return await AccountModel.findOne({ _id: id });
+exports.getAUserSV = async(code) => {
+    const user = await AccountModel.findOne({ LbCode: code });
+    if(!user) {
+        return await AccountModel.findOne({ _id: code });
+    }
+
+    return user;
 }

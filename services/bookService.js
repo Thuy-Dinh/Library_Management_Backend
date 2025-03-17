@@ -2,11 +2,12 @@ const mongoose = require('mongoose');
 const BookModel = require("../models/Book");
 const CategoryModel = require("../models/Category");
 
-exports.bookDetailSV = async(bookID) => {
-    const book = await BookModel.findById({ _id: bookID });
-    console.log(book);
-    return book;
-}
+exports.bookDetailSV = async (bookID) => {
+    const bookIdsArray = bookID.includes(",") ? bookID.split(",") : [bookID]; // Chuyển thành mảng
+    const books = await BookModel.find({ _id: { $in: bookIdsArray } }); // Tìm nhiều sách
+    console.log(books);
+    return books;
+};
 
 exports.proposeBookSV = async (bookID) => {
     try {

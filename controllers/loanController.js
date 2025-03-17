@@ -1,30 +1,55 @@
 const loanService = require("../services/loanService");
 
+// exports.createLoan = async (req, res) => {
+//     try {
+//         // Debug dữ liệu nhận được
+//         console.log("Body:", req.body);
+//         console.log("Files:", req.files);
+
+//         const { userEmail, bookID, phone, address, countDay, note } = req.body;
+//         const frontImage = req.files['frontImage'];
+//         const backImage = req.files['backImage'];
+
+//         // Kiểm tra xem có thiếu trường nào không
+//         if (!userEmail || !bookID || !phone || !address || !countDay || !frontImage || !backImage) {
+//             return res.status(400).json({ error: "Các trường dữ liệu bị thiếu" });
+//         }
+
+//         // Gọi service xử lý logic
+//         const loan = await loanService.createLoan(
+//             userEmail,
+//             bookID,
+//             phone,
+//             address,
+//             countDay,
+//             frontImage,
+//             backImage,
+//             note
+//         );
+
+//         return res.status(200).json({ message: "Tạo đơn thành công", loan });
+//     } catch (err) {
+//         console.error("Lỗi trong createLoan:", err.message);
+//         return res.status(500).json({ error: err.message });
+//     }
+// };
+
 exports.createLoan = async (req, res) => {
     try {
-        // Debug dữ liệu nhận được
-        console.log("Body:", req.body);
-        console.log("Files:", req.files);
-
-        const { userEmail, bookID, phone, address, countDay, note } = req.body;
-        const frontImage = req.files['frontImage'];
-        const backImage = req.files['backImage'];
+        const { code, bookID, countDay, note, method } = req.body;
 
         // Kiểm tra xem có thiếu trường nào không
-        if (!userEmail || !bookID || !phone || !address || !countDay || !frontImage || !backImage) {
+        if (!code || !bookID || !countDay || !method) {
             return res.status(400).json({ error: "Các trường dữ liệu bị thiếu" });
         }
 
         // Gọi service xử lý logic
         const loan = await loanService.createLoan(
-            userEmail,
+            code,
             bookID,
-            phone,
-            address,
             countDay,
-            frontImage,
-            backImage,
-            note
+            note,
+            method
         );
 
         return res.status(200).json({ message: "Tạo đơn thành công", loan });

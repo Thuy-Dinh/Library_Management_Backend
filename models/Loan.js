@@ -4,17 +4,19 @@ const LoanSchema = new mongoose.Schema({
     LoanID: { type: Number, required: true },
     AccountID: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Account', // Tên model `Account`
+        ref: 'Account', 
         required: true 
     },
-    BookID: { 
+    BookID: [{ 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Book', // Tên model `Book`
+        ref: 'Book', 
         required: true 
-    },
+    }],
     DayStart: Date,
     DayEnd: Date,
     Note: String,
+    Method: String,
+    Payment: String,
     State: String
 });
 

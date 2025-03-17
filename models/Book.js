@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const BookSchema = new mongoose.Schema({
     BookID: Number,
+    BookCode: String,
     Title: String,
     Author: String,
     Category: {
