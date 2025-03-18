@@ -110,7 +110,13 @@ exports.handleUserLogin = async(email, password) => {
                 );                
 
                 if (account) {
-                    if(account.State === "Active") {
+                    if(account.State === "UnActive") {
+                        accountData.errCode = 5;
+                        accountData.errMessage = 'Tài khoản đã bị khóa';
+                    } else if(account.State === "Request") {
+                        accountData.errCode = 4;
+                        accountData.errMessage = 'Tài khoản chưa xác thực email. Vui lòng kiểm tra lại';
+                    } else {
                         let check = await bcrypt.compare(password, account.Password);
                         if (check) {
                             accountData.errCode = 0;
@@ -121,9 +127,6 @@ exports.handleUserLogin = async(email, password) => {
                             accountData.errCode = 3;
                             accountData.errMessage = 'Sai mật khẩu';
                         }
-                    } else {
-                        accountData.errCode = 4;
-                        accountData.errMessage = 'Tài khoản chưa xác thực email. Vui lòng kiểm tra lại';
                     }
                 } else {
                     accountData.errCode = 2;
@@ -153,3 +156,55 @@ exports.getAUserSV = async(code) => {
 
     return user;
 }
+
+const sendEmail = async (to, subject, text) => {
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: process.env.EMAIL_USER, 
+            pass: process.env.GMAIL_APP_PASSWORD
+        }
+    });
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to,
+        subject,
+        text
+    };
+
+    await transporter.sendMail(mailOptions);
+};
+
+exports.limitedAccountSV = async (id, state) => {
+    const user = await AccountModel.findById(id);
+    if (!user) {
+        return null;
+    }
+
+    let subject = "";
+    let message = "";
+
+    if (state === "limited") {
+        user.State = "Limited";
+        subject = "Tài khoản của bạn đã bị giới hạn!";
+        message = `Xin chào ${user.Name}, tài khoản của bạn đã bị giới hạn, bạn không thể tiếp tục mượn sách tại thư viện. Nếu có thắc mắc, vui lòng liên hệ thư viện để hỗ trợ.`;
+    } else if (state === "unActive") {
+        user.State = "UnActive";
+        subject = "Tài khoản của bạn đã bị khóa!";
+        message = `Xin chào ${user.Name}, tài khoản của bạn đã bị khóa. Nếu đây là nhầm lẫn, vui lòng liên hệ với chúng tôi.`;
+    } else if (state === "active") {
+        user.State = "Active";
+        subject = "Tài khoản của bạn đã được mở khóa!";
+        message = `Xin chào ${user.Name}, tài khoản của bạn đã có thể sử dụng bình thường.`;
+    } else {
+        throw new Error("Trạng thái không hợp lệ!");
+    }
+
+    await user.save(); // Lưu thay đổi vào database
+
+    // Gửi email thông báo cho người dùng
+    await sendEmail(user.Email, subject, message);
+
+    return user;
+};

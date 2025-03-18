@@ -19,7 +19,8 @@ const BookSchema = new mongoose.Schema({
     Availability: String,
     Rating: Number,
     Cover: String,
-    CountBorrow: Number
+    CountBorrow: Number,
+    Price: String
 });
 
 module.exports = mongoose.model('Book', BookSchema);

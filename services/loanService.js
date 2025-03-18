@@ -72,7 +72,7 @@ const nodemailer = require("nodemailer");
 //     }
 // };
 
-exports.createLoan = async (code, bookID, countDay, note, method) => {
+exports.createLoan = async (code, bookID, countDay, note, method, payment) => {
     try {
         const nowUTC = new Date();
         const dayStart = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000); // Giờ Việt Nam (UTC+7)
@@ -84,22 +84,25 @@ exports.createLoan = async (code, bookID, countDay, note, method) => {
         // Tìm người dùng
         const user = await User.findOne({ LbCode: code });
         if (!user) {
-            throw new Error("Không tìm thấy người dùng");
+            return { errCode: 1, message: "Không tìm thấy người dùng" };
         }
+
+        // Kiểm tra nếu tài khoản bị hạn chế
+        if (user.State === "Limited") {
+            return { errCode: 2, message: "Tài khoản của bạn đã bị hạn chế, không thể mượn sách." };
+        }
+
         const userID = user._id;
 
         if (method === "Mượn về nhà") {
-            // Kiểm tra số ngày mượn hợp lệ
             const countDayInt = parseInt(countDay, 10);
             if (isNaN(countDayInt) || countDayInt <= 0) {
-                throw new Error("Số ngày mượn không hợp lệ");
+                return { errCode: 3, message: "Số ngày mượn không hợp lệ" };
             }
 
-            // Tính ngày kết thúc
             const dayEnd = new Date(dayStart);
             dayEnd.setDate(dayEnd.getDate() + countDayInt);
 
-            // Cập nhật sách thành "Unavailable"
             const bookUpdate = await Book.findByIdAndUpdate(
                 bookID,
                 { Availability: "Unavailable" },
@@ -107,10 +110,9 @@ exports.createLoan = async (code, bookID, countDay, note, method) => {
             );
 
             if (!bookUpdate) {
-                throw new Error("Không tìm thấy sách để cập nhật");
+                return { errCode: 4, message: "Không tìm thấy sách để cập nhật" };
             }
 
-            // Tạo đơn mượn
             const loan = await Loan.create({
                 LoanID: newLoanID,
                 AccountID: userID,
@@ -118,26 +120,23 @@ exports.createLoan = async (code, bookID, countDay, note, method) => {
                 DayStart: dayStart,
                 DayEnd: dayEnd,
                 Method: "Mượn về nhà",
-                Payment: "100.000 đồng",
+                Payment: payment,
                 Note: note,
                 State: "Yêu cầu mượn"
             });
 
-            return loan;
+            return { errCode: 0, message: "Tạo đơn thành công", loan };
         } else if (method === "Mượn tại chỗ") {
             const bookCodes = Array.isArray(bookID) ? bookID : [bookID];
 
-            // Tìm danh sách sách có bookCode tương ứng
             const books = await Book.find({ BookCode: { $in: bookCodes } }, "_id");
 
             if (!books || books.length === 0) {
-                throw new Error("Không tìm thấy sách với mã BookCode đã cho");
+                return { errCode: 5, message: "Không tìm thấy sách với mã BookCode đã cho" };
             }
 
-            // Lấy danh sách BookID từ kết quả truy vấn
             const bookList = books.map(book => book._id);
 
-            // Không cập nhật trạng thái sách
             const loan = await Loan.create({
                 LoanID: newLoanID,
                 AccountID: userID,
@@ -150,13 +149,13 @@ exports.createLoan = async (code, bookID, countDay, note, method) => {
                 State: "Đang mượn"
             });
 
-            return loan;
+            return { errCode: 0, message: "Tạo đơn thành công", loan };
         } else {
-            throw new Error("Hình thức mượn không hợp lệ");
+            return { errCode: 6, message: "Hình thức mượn không hợp lệ" };
         }
     } catch (error) {
         console.error("Error in loanService.createLoan:", error.message);
-        throw error;
+        return { errCode: 500, message: "Lỗi hệ thống" };
     }
 };
 

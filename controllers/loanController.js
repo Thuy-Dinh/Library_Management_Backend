@@ -36,26 +36,18 @@ const loanService = require("../services/loanService");
 
 exports.createLoan = async (req, res) => {
     try {
-        const { code, bookID, countDay, note, method } = req.body;
+        const { code, bookID, countDay, note, method, payment } = req.body;
 
-        // Kiểm tra xem có thiếu trường nào không
-        if (!code || !bookID || !countDay || !method) {
-            return res.status(400).json({ error: "Các trường dữ liệu bị thiếu" });
+        if (!code || !bookID || !countDay || !method || !payment) {
+            return res.status(400).json({ errCode: 1, message: "Các trường dữ liệu bị thiếu" });
         }
 
-        // Gọi service xử lý logic
-        const loan = await loanService.createLoan(
-            code,
-            bookID,
-            countDay,
-            note,
-            method
-        );
+        const response = await loanService.createLoan(code, bookID, countDay, note, method, payment);
 
-        return res.status(200).json({ message: "Tạo đơn thành công", loan });
+        return res.status(200).json(response);
     } catch (err) {
         console.error("Lỗi trong createLoan:", err.message);
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ errCode: 500, message: "Lỗi hệ thống" });
     }
 };
 

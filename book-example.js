@@ -34,7 +34,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.7,
     Cover: "https://s3.amazonaws.com/gs-geo-images/cd76c55b-9830-44d9-8596-95678d41b7cf.jpg",
-    CountBorrow: 250
+    CountBorrow: 250,
+    Price: 150000
   },
   {
     BookID: 2,
@@ -51,7 +52,8 @@ const additionalBookData = [
     Availability: "Unavailable",
     Rating: 4.5,
     Cover: "https://m.media-amazon.com/images/I/71O2XIytdqL._AC_UF1000,1000_QL80_.jpg",
-    CountBorrow: 130
+    CountBorrow: 130,
+    Price: 180000
   },
   {
     BookID: 3,
@@ -68,7 +70,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.6,
     Cover: "https://m.media-amazon.com/images/I/51i-9SGWr-L._AC_UF1000,1000_QL80_.jpg",
-    CountBorrow: 85
+    CountBorrow: 85,
+    Price: 200000
   },
   {
     BookID: 4,
@@ -85,7 +88,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.7,
     Cover: "https://peribo.com.au/wp-content/uploads/9781853262715-15.jpg",
-    CountBorrow: 90
+    CountBorrow: 90,
+    Price: 175000
   },
   {
     BookID: 5,
@@ -102,7 +106,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.4,
     Cover: "https://m.media-amazon.com/images/I/A1JR2oK-orL._AC_UF1000,1000_QL80_.jpg",
-    CountBorrow: 120
+    CountBorrow: 120,
+    Price: 160000
   },
   {
     BookID: 6,
@@ -119,7 +124,8 @@ const additionalBookData = [
     Availability: "Unavailable",
     Rating: 4.8,
     Cover: "https://m.media-amazon.com/images/I/71OZJsgZzQL._AC_UF1000,1000_QL80_.jpg",
-    CountBorrow: 95
+    CountBorrow: 95,
+    Price: 190000
   },
   {
     BookID: 7,
@@ -136,7 +142,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.3,
     Cover: "https://d28hgpri8am2if.cloudfront.net/book_images/onix/cvr9781982146160/frankenstein-9781982146160_hr.jpg",
-    CountBorrow: 175
+    CountBorrow: 175,
+    Price: 145000
   },
   {
     BookID: 8,
@@ -153,7 +160,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.6,
     Cover: "https://m.media-amazon.com/images/I/61N-UOA0alL._UF1000,1000_QL80_.jpg",
-    CountBorrow: 145
+    CountBorrow: 145,
+    Price: 165000
   },
   {
     BookID: 9,
@@ -170,7 +178,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.5,
     Cover: "https://upload.wikimedia.org/wikipedia/en/d/db/Fahrenheit_451_1st_ed_cover.jpg",
-    CountBorrow: 180
+    CountBorrow: 180,
+    Price: 185000
   },
   {
     BookID: 10,
@@ -187,7 +196,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.5,
     Cover: "https://m.media-amazon.com/images/I/91wOUFZCE+L._UF1000,1000_QL80_.jpg",
-    CountBorrow: 160
+    CountBorrow: 160,
+    Price: 175000
   },
   {
     BookID: 11,
@@ -204,7 +214,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.8,
     Cover: "https://m.media-amazon.com/images/I/71FxgtFKcQL._AC_UF1000,1000_QL80_.jpg",
-    CountBorrow: 300
+    CountBorrow: 300,
+    Price: 195000
   },
   {
     BookID: 12,
@@ -221,7 +232,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.6,
     Cover: "https://cdn.waterstones.com/bookjackets/large/9780/1410/9780141036144.jpg",
-    CountBorrow: 280
+    CountBorrow: 280,
+    Price: 175000
   },
   {
     BookID: 13,
@@ -238,7 +250,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.7,
     Cover: "https://m.media-amazon.com/images/I/91uwocAMtSL._AC_UF1000,1000_QL80_.jpg",
-    CountBorrow: 250
+    CountBorrow: 250,
+    Price: 185000
   },
   {
     BookID: 14,
@@ -255,7 +268,8 @@ const additionalBookData = [
     Availability: "Unavailable",
     Rating: 4.4,
     Cover: "https://m.media-amazon.com/images/I/51aV053NRjL._AC_UF1000,1000_QL80_.jpg",
-    CountBorrow: 200
+    CountBorrow: 200,
+    Price: 160000
   },
   {
     BookID: 15,
@@ -272,7 +286,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.6,
     Cover: "https://upload.wikimedia.org/wikipedia/commons/7/7a/The_Great_Gatsby_Cover_1925_Retouched.jpg",
-    CountBorrow: 260
+    CountBorrow: 260,
+    Price: 170000
   },
   {
     BookID: 16,
@@ -289,7 +304,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.5,
     Cover: "https://upload.wikimedia.org/wikipedia/en/6/62/BraveNewWorld_FirstEdition.jpg",
-    CountBorrow: 240
+    CountBorrow: 240,
+    Price: 180000
   },
   {
     BookID: 17,
@@ -306,7 +322,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.2,
     Cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcKbLoG01sx1LqNYQjsB5mNwZVPjN71J5i6w&s",
-    CountBorrow: 220
+    CountBorrow: 220,
+    Price: 165000
   },
   {
     BookID: 18,
@@ -323,7 +340,8 @@ const additionalBookData = [
     Availability: "Unavailable",
     Rating: 4.3,
     Cover: "https://m.media-amazon.com/images/I/51M7XGLQTBL._AC_UF894,1000_QL80_.jpg",
-    CountBorrow: 180
+    CountBorrow: 180,
+    Price: 195000
   },
   {
     BookID: 19,
@@ -340,7 +358,8 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.6,
     Cover: "https://bookowlsbd.com/cdn/shop/files/Don-Quixote-COVER.jpg?v=1723967636",
-    CountBorrow: 230
+    CountBorrow: 230,
+    Price: 200000
   },
   {
     BookID: 20,
@@ -357,8 +376,10 @@ const additionalBookData = [
     Availability: "Available",
     Rating: 4.8,
     Cover: "https://m.media-amazon.com/images/I/71zcCb5PvuL._UF1000,1000_QL80_.jpg",
-    CountBorrow: 270
+    CountBorrow: 270,
+    Price: 220000
   }
+
 ];
 
 function generateBookCode(book) {

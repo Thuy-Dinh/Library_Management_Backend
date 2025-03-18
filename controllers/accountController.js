@@ -198,3 +198,33 @@ exports.getAUser = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.limitedAccount = async (req, res) => {
+    const { id, state } = req.body;
+    console.log(id);
+    console.log(state);
+
+    try {
+        if (!id || !state) {
+            return res.status(400).json({
+                errCode: 1,
+                message: 'Các trường dữ liệu không được để trống!'
+            });
+        }
+
+        const user = await accountService.limitedAccountSV(id, state);
+
+        if (!user) {
+            return res.status(404).json({
+                errCode: 2,
+                message: 'Không tìm thấy người dùng!'
+            });
+        } else {
+            return res.status(200).json({ user });
+        }
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
