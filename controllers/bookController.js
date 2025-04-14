@@ -328,3 +328,14 @@ exports.searchResult = async (req, res) => {
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+exports.searchBookByOtherField = async (req, res) => {
+    try {
+        const inform = req.query;
+        const books = await bookService.searchBookByOtherFieldSV(inform);
+        return res.json(books);
+    } catch (error) {
+        console.error('Search error:', error);
+        return res.status(500).json({ message: 'Lỗi tìm kiếm sách', error });
+    }
+  };

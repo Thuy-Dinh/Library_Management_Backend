@@ -241,3 +241,43 @@ exports.searchResultSV = async (keyword) => {
         throw error;
     }
 };
+
+exports.searchBookByOtherFieldSV = async (params) => {
+    const {
+      title,
+      publisher,
+      author,
+      language,
+      year,
+      keyword,
+      sortBy = 'Title',
+      sortOrder = 'asc',
+      limit = 500
+    } = params;
+  
+    const query = {};
+  
+    if (title) query.Title = { $regex: title, $options: 'i' };
+    if (publisher) query.Publisher = { $regex: publisher, $options: 'i' };
+    if (author) query.Author = { $regex: author, $options: 'i' };
+    if (language) query.Language = { $regex: language, $options: 'i' };
+    if (year) query.Publication_year = parseInt(year);
+    if (keyword) {
+      query.$or = [
+        { Title: { $regex: keyword, $options: 'i' } },
+        { Author: { $regex: keyword, $options: 'i' } },
+        { Publisher: { $regex: keyword, $options: 'i' } },
+        { Tag: { $regex: keyword, $options: 'i' } },
+        { Summary: { $regex: keyword, $options: 'i' } }
+      ];
+    }
+  
+    const sortQuery = {};
+    sortQuery[sortBy] = sortOrder === 'asc' ? 1 : -1;
+  
+    const books = await BookModel.find(query)
+      .sort(sortQuery)
+      .limit(Number(limit));
+  
+    return books;
+};

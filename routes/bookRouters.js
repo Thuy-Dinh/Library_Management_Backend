@@ -13,7 +13,8 @@ const {
     createTopic,
     searchByCategory,
     searchSuggestion,
-    searchResult
+    searchResult,
+    searchBookByOtherField
 } = require("../controllers/bookController");
 
 const router = express.Router();
@@ -33,6 +34,7 @@ router.get('/all-topic', getAllTopic);
 router.get('/topic-books', searchByCategory);
 router.get('/search-suggestions', searchSuggestion);
 router.get('/search-result', searchResult);
+router.get('/search', searchBookByOtherField);
 
 router.post('/create-topic', createTopic);
 
