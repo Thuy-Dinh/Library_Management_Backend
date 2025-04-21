@@ -42,27 +42,24 @@ exports.getAllBookSV = async () => {
 
 exports.createBookSV = async (bookData) => {
     try {
-        // Tạo sách mới với dữ liệu đã bao gồm các giá trị mặc định
-        const newBook = new BookModel(bookData);
-
-        // Lưu sách vào cơ sở dữ liệu
-        const savedBook = await newBook.save();
-
-        // Cập nhật số lượng sách trong Category
-        await CategoryModel.findByIdAndUpdate(
-            bookData.Category,  // Sử dụng Category ID đã được chuyển thành ObjectId
-            { $inc: { Quantity: 1 } },
-            { new: true } // Trả về đối tượng cập nhật
-        );
-
-        // Trả về sách đã được populate với Category
-        const populatedBook = await BookModel.findById(savedBook._id).populate('Category');
-        return populatedBook;
+      // Tạo và lưu sách (bookData đã chứa cả Price và Location)
+      const newBook = new BookModel(bookData);
+      const savedBook = await newBook.save();
+  
+      // Cập nhật số lượng trong Category
+      await CategoryModel.findByIdAndUpdate(
+        bookData.Category,
+        { $inc: { Quantity: 1 } },
+        { new: true }
+      );
+  
+      // Trả về sách đã populate
+      return await BookModel.findById(savedBook._id).populate('Category');
     } catch (error) {
-        console.error("Error saving book:", error);
-        throw new Error("Error saving book");
+      console.error("Error saving book:", error);
+      throw new Error("Error saving book");
     }
-};
+};  
 
 exports.editBookSV = async ({
     id,
@@ -76,40 +73,29 @@ exports.editBookSV = async ({
     summary,
     language,
     state,
-    cover
+    cover,
+    location // object: { area, shelf, slot }
 }) => {
-    console.log(id,
-        title,
-        author,
-        subcategory,
-        tag,
-        publisher,
-        publication_year,
-        edition,
-        summary,
-        language,
-        state
-    );
     try {
         const updatedBook = await BookModel.findByIdAndUpdate(
-            id, // ID sách
+            id,
             {
-                Title: title, 
-                Author: author, 
-                Subcategory: subcategory, 
+                Title: title,
+                Author: author,
+                Subcategory: subcategory,
                 Tag: tag,
-                Publisher: publisher, 
-                Publication_year: publication_year, 
-                Edition: edition, 
-                Summary: summary, 
+                Publisher: publisher,
+                Publication_year: publication_year,
+                Edition: edition,
+                Summary: summary,
                 Language: language,
                 Availability: state,
-                Cover: cover
+                Cover: cover,
+                Location: location // cập nhật đầy đủ location
             },
-            { new: true } // Trả về tài liệu sau khi cập nhật
+            { new: true }
         );
 
-        console.log(updatedBook);
         return updatedBook;
     } catch (error) {
         console.error("Error updating book:", error);
@@ -291,4 +277,16 @@ exports.searchBookByOtherFieldSV = async (params) => {
       .limit(Number(limit));
   
     return books;
+};
+
+exports.getAllAreas = async () => {
+    try {
+        // Lấy tất cả sách và lọc các khu vực duy nhất
+        const books = await BookModel.find({});
+        const areas = books.map(book => book.Location?.area).filter(Boolean);
+        const uniqueAreas = [...new Set(areas)];
+        return uniqueAreas;
+    } catch (error) {
+        throw new Error('Lỗi khi lấy khu vực');
+    }
 };

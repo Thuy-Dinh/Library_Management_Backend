@@ -41,7 +41,6 @@ exports.countBorrowedByTime = async (req, res) => {
 
 exports.getBorrowedByMonth = async (req, res) => {
     const year = parseInt(req.query.year, 10);
-    console.log(year);
     if (!year) return res.status(400).json({ error: 'Missing or invalid year' });
   
     try {

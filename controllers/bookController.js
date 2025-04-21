@@ -92,80 +92,110 @@ exports.getAllBook = async (req, res) => {
     }
 };
 
-exports.createBook = async (req, res) => {
+// Hàm tạo mã BookCode
+function generateBookCode(book) {
+    const removeDiacritics = (str) =>
+      str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const getAcronym = (title) => {
+      return removeDiacritics(title)
+        .split(/\s+/)
+        .map((word) => word[0]?.toUpperCase())
+        .join("");
+    };
+    return `${getAcronym(book.Title)}${book.Publication_year}`;
+  }
+  
+  exports.createBook = async (req, res) => {
     try {
-        const {
-            title,
-            author,
-            topic,
-            subcategory,
-            tag,
-            publisher,
-            publication_year,
-            edition,
-            summary,
-            language,
-            cover
-        } = req.body;
-
-        let categoryID = null;
-
-        // Nếu topic được cung cấp, tìm Category bằng tên
-        if (topic) {
-            const category = await CategoryModel.findOne({ Name: topic });
-            if (!category) {
-                return res.status(400).json({ success: false, message: "Category không tồn tại" });
-            }
-            categoryID = category._id; // Lấy CategoryID từ kết quả tìm kiếm
+      const {
+        title,
+        author,
+        topic,
+        subcategory,
+        tag,
+        publisher,
+        publication_year,
+        edition,
+        summary,
+        language,
+        cover,
+        area,
+        shelf,
+        slot,
+        price,
+      } = req.body;
+  
+      // Tìm Category ID
+      let categoryID = null;
+      if (topic) {
+        const category = await CategoryModel.findOne({ Name: topic });
+        if (!category) {
+          return res
+            .status(400)
+            .json({ success: false, message: "Category không tồn tại" });
         }
-
-        // Nếu không có topic, bạn có thể xử lý theo cách khác hoặc để null (trường hợp này có thể có logic thêm để xử lý)
-        if (!categoryID) {
-            return res.status(400).json({ success: false, message: "Category không xác định" });
-        }
-
-        // Lấy BookID cao nhất từ cơ sở dữ liệu
-        const lastBook = await Book.findOne().sort({ BookID: -1 }).exec();
-        const newBookID = lastBook ? lastBook.BookID + 1 : 1; // Nếu không có sách nào, bắt đầu từ 1
-
-        // Tạo dữ liệu sách
-        const bookData = {
-            BookID: newBookID, // Gán BookID mới
-            Title: title,
-            Author: author,
-            Category: categoryID, // Liên kết với CategoryID
-            Subcategory: subcategory,
-            Tag: tag,
-            Publisher: publisher,
-            Publication_year: publication_year,
-            Edition: edition,
-            Summary: summary,
-            Language: language,
-            Cover: cover, // Cover là base64, lưu dưới dạng String
-            Availability: 'Available', // Mặc định là 'Available'
-            Rating: 0, // Mặc định là 0
-            CountBorrow: 0 // Mặc định là 0
-        };
-
-        // Gọi hàm tạo sách
-        const book = await bookService.createBookSV(bookData);
-
-        // Nếu không tạo được sách
-        if (!book) {
-            return res.status(500).json({ success: false, message: "Không thể tạo sách" });
-        }
-
-        // Trả về sách vừa tạo
-        return res.status(201).json({ success: true, data: book });
+        categoryID = category._id;
+      }
+      if (!categoryID) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Category không xác định" });
+      }
+  
+      // Tạo BookID mới
+      const lastBook = await Book.findOne().sort({ BookID: -1 }).exec();
+      const newBookID = lastBook ? lastBook.BookID + 1 : 1;
+  
+      // Chuẩn bị dữ liệu lưu
+      const bookData = {
+        BookID: newBookID,
+        Title: title,
+        Author: author,
+        Category: categoryID,
+        Subcategory: subcategory,
+        Tag: tag,
+        Publisher: publisher,
+        Publication_year: publication_year,
+        Edition: edition,
+        Summary: summary,
+        Language: language,
+        Cover: cover,
+        Availability: "Available",
+        Rating: 0, // sẽ cập nhật bên dưới
+        CountBorrow: 0,
+        Price: price,
+        Location: {
+          area: area || "",
+          shelf: shelf || "",
+          slot: slot || "",
+        },
+      };
+  
+      // Tạo BookCode và Rating ngẫu nhiên
+      bookData.BookCode = generateBookCode(bookData);
+      bookData.Rating = parseFloat(
+        (Math.random() * (5 - 3) + 3).toFixed(1)
+      ); // ví dụ: 3.7
+  
+      // Tạo sách trong DB
+      const book = await bookService.createBookSV(bookData);
+      if (!book) {
+        return res
+          .status(500)
+          .json({ success: false, message: "Không thể tạo sách" });
+      }
+  
+      return res.status(201).json({ success: true, data: book });
     } catch (error) {
-        console.error("Error creating book:", error);
-        return res.status(500).json({ success: false, message: "Lỗi máy chủ" });
+      console.error("Error creating book:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Lỗi máy chủ" });
     }
-}
+};    
 
 exports.editBook = async (req, res) => {
     try {
-        console.log(req.params);
         const { id } = req.params;
         const {
             title, 
@@ -178,7 +208,10 @@ exports.editBook = async (req, res) => {
             summary, 
             language,
             state,
-            cover
+            cover,
+            area,      // thêm mới
+            shelf,     // thêm mới
+            slot       // sửa từ "floor" → "slot" cho đúng schema
         } = req.body;
 
         const updatedBook = await bookService.editBookSV({
@@ -193,7 +226,8 @@ exports.editBook = async (req, res) => {
             summary,
             language,
             state,
-            cover
+            cover,
+            location: { area, shelf, slot } // gộp vào Location
         });
 
         if (!updatedBook) {
@@ -356,5 +390,15 @@ exports.searchBookByOtherField = async (req, res) => {
     } catch (error) {
         console.error('Search error:', error);
         return res.status(500).json({ message: 'Lỗi tìm kiếm sách', error });
+    }
+};
+
+exports.getAllAreas = async (req, res) => {
+    try {
+        const areas = await bookService.getAllAreas();
+        res.json({ areas });
+    } catch (error) {
+        console.error('Lỗi khi lấy khu vực:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra khi lấy khu vực.' });
     }
 };

@@ -135,8 +135,9 @@ exports.createLoan = async (code, bookID, countDay, note, method, payment) => {
 
             return { errCode: 0, message: "Tạo đơn thành công", loan };
         } else if (method === "Mượn tại chỗ") {
-            const bookCodes = Array.isArray(bookID) ? bookID : [bookID];
-
+            const bookCodes = Array.isArray(bookID)
+                ? bookID.map((b) => (typeof b === "object" ? b.code : b))
+                : [typeof bookID === "object" ? bookID.code : bookID];
             const books = await Book.find({ BookCode: { $in: bookCodes } }, "_id");
 
             if (!books || books.length === 0) {

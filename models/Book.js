@@ -20,7 +20,12 @@ const BookSchema = new mongoose.Schema({
     Rating: Number,
     Cover: String,
     CountBorrow: Number,
-    Price: String
+    Price: String,
+    Location: {
+        area: String,
+        shelf: String,
+        slot: String
+    }
 });
 
 module.exports = mongoose.model('Book', BookSchema);
