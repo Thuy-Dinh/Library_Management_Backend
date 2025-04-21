@@ -33,11 +33,37 @@ const sendConfirmationEmail = async (email) => {
 
     const url = "http://localhost:3000/confirm";
     await transporter.sendMail({
+        from: `"Thư viện BokStory" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: "Xác nhận tài khoản của bạn",
-        html: `<h3>Nhấn vào liên kết bên dưới để xác nhận tài khoản của bạn:</h3>
-               <a href="${url}">Xác nhận tài khoản</a>`,
-    });
+        subject: "📩 Xác nhận tài khoản của bạn",
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333;">
+                <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <div style="background-color: #007BFF; color: white; padding: 20px; text-align: center;">
+                        <h2>🔐 Xác nhận tài khoản của bạn</h2>
+                    </div>
+                    <div style="padding: 25px;">
+                        <p>Xin chào,</p>
+                        <p>Bạn vừa đăng ký tài khoản tại <strong>Thư viện BokStory</strong>. Vui lòng xác nhận tài khoản của bạn bằng cách nhấn vào nút bên dưới:</p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${url}" 
+                               style="background-color: #28a745; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                               ✅ Xác nhận tài khoản
+                            </a>
+                        </div>
+    
+                        <p>Nếu bạn không yêu cầu đăng ký tài khoản, vui lòng bỏ qua email này.</p>
+                        <p>Liên kết sẽ hết hạn sau một thời gian nhất định để đảm bảo bảo mật thông tin.</p>
+                    </div>
+                    <div style="background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 13px; color: #666;">
+                        📚 Thư viện BokStory<br>
+                        Mọi thắc mắc vui lòng liên hệ: 4evershop4@gmail.com | 096 440 6858
+                    </div>
+                </div>
+            </div>
+        `
+    });    
 };
 
 exports.handleUserSignup = async (name, email, password, cccd, phone, address, age, gender) => {
@@ -176,35 +202,73 @@ const sendEmail = async (to, subject, text) => {
     await transporter.sendMail(mailOptions);
 };
 
-exports.limitedAccountSV = async (id, state) => {
+exports.limitedAccountSV = async (id, state) => { 
     const user = await AccountModel.findById(id);
     if (!user) {
         return null;
     }
 
     let subject = "";
-    let message = "";
+    let html = "";
 
     if (state === "limited") {
         user.State = "Limited";
-        subject = "Tài khoản của bạn đã bị giới hạn!";
-        message = `Xin chào ${user.Name}, tài khoản của bạn đã bị giới hạn, bạn không thể tiếp tục mượn sách tại thư viện. Nếu có thắc mắc, vui lòng liên hệ thư viện để hỗ trợ.`;
+        subject = "⚠️ Tài khoản của bạn đã bị giới hạn quyền mượn sách";
+        html = `
+            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #fdf1f0;">
+                <div style="max-width: 600px; margin: auto; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #d9534f;">📛 Tài khoản bị giới hạn</h2>
+                    <p>Xin chào <strong>${user.Name}</strong>,</p>
+                    <p>Tài khoản của bạn hiện đang ở trạng thái <strong>bị giới hạn</strong>, do đó bạn <strong>không thể mượn sách tại thư viện</strong> trong thời gian này.</p>
+                    <p>Nếu bạn có bất kỳ thắc mắc hoặc cần hỗ trợ, vui lòng liên hệ thư viện để được giải đáp:</p>
+                    <ul>
+                        <li>📧 Email: 4evershop4@gmail.com</li>
+                        <li>☎️ Hotline: 096 440 6858</li>
+                    </ul>
+                    <p style="margin-top: 20px;">Cảm ơn bạn đã sử dụng dịch vụ của thư viện.</p>
+                </div>
+            </div>
+        `;
     } else if (state === "unActive") {
         user.State = "UnActive";
-        subject = "Tài khoản của bạn đã bị khóa!";
-        message = `Xin chào ${user.Name}, tài khoản của bạn đã bị khóa. Nếu đây là nhầm lẫn, vui lòng liên hệ với chúng tôi.`;
+        subject = "🚫 Tài khoản của bạn đã bị khóa";
+        html = `
+            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #fef5e7;">
+                <div style="max-width: 600px; margin: auto; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #f39c12;">🔒 Tài khoản bị khóa</h2>
+                    <p>Xin chào <strong>${user.Name}</strong>,</p>
+                    <p>Tài khoản của bạn đã bị <strong>khóa tạm thời</strong> và bạn sẽ không thể truy cập vào hệ thống thư viện trong thời gian này.</p>
+                    <p>Nếu đây là nhầm lẫn hoặc bạn cần hỗ trợ mở khóa, vui lòng liên hệ với thư viện qua:</p>
+                    <ul>
+                        <li>📧 Email: 4evershop4@gmail.com</li>
+                        <li>☎️ Hotline: 096 440 6858</li>
+                    </ul>
+                    <p>Chúng tôi luôn sẵn sàng hỗ trợ bạn.</p>
+                </div>
+            </div>
+        `;
     } else if (state === "active") {
         user.State = "Active";
-        subject = "Tài khoản của bạn đã được mở khóa!";
-        message = `Xin chào ${user.Name}, tài khoản của bạn đã có thể sử dụng bình thường.`;
+        subject = "✅ Tài khoản của bạn đã được mở khóa";
+        html = `
+            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #eafaf1;">
+                <div style="max-width: 600px; margin: auto; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #28a745;">🎉 Tài khoản đã được kích hoạt lại</h2>
+                    <p>Xin chào <strong>${user.Name}</strong>,</p>
+                    <p>Chúc mừng! Tài khoản của bạn đã được <strong>mở khóa</strong> và có thể sử dụng lại như bình thường.</p>
+                    <p>Hãy đăng nhập vào hệ thống để tiếp tục mượn sách, tra cứu tài liệu và sử dụng các dịch vụ khác từ thư viện.</p>
+                    <p style="margin-top: 20px;">Cảm ơn bạn đã đồng hành cùng thư viện.</p>
+                </div>
+            </div>
+        `;
     } else {
         throw new Error("Trạng thái không hợp lệ!");
     }
 
     await user.save(); // Lưu thay đổi vào database
 
-    // Gửi email thông báo cho người dùng
-    await sendEmail(user.Email, subject, message);
+    // Gửi email thông báo HTML
+    await sendEmail(user.Email, subject, html);
 
     return user;
 };

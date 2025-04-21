@@ -14,25 +14,39 @@ const sendAccountDetailsEmail = async (email, account) => {
         });
 
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: `"Thư viện BokStory" <${process.env.EMAIL_USER}>`,
             to: email,
-            subject: "Thông tin tài khoản của bạn",
+            subject: "🎉 Kích hoạt tài khoản thư viện thành công!",
             html: `
-                <h2>Chúc mừng! Tài khoản của bạn đã được kích hoạt.</h2>
-                <p>Dưới đây là thông tin tài khoản của bạn:</p>
-                <ul>
-                    <li><strong>Mã thẻ bạn đọc:</strong> ${account.LbCode}</li>
-                    <li><strong>Tên:</strong> ${account.Name}</li>
-                    <li><strong>Email:</strong> ${account.Email}</li>
-                    <li><strong>Số CCCD:</strong> ${account.CCCDNumber}</li>
-                    <li><strong>Số điện thoại:</strong> ${account.Phone}</li>
-                    <li><strong>Địa chỉ:</strong> ${account.Address}</li>
-                    <li><strong>Tuổi:</strong> ${account.Age}</li>
-                    <li><strong>Giới tính:</strong> ${account.Gender}</li>
-                </ul>
-                <p>Vui lòng đăng nhập để sử dụng dịch vụ của chúng tôi.</p>
+                <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; color: #333;">
+                    <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <div style="background-color: #4CAF50; color: white; padding: 20px; text-align: center;">
+                            <h2>🎉 Tài khoản của bạn đã được kích hoạt!</h2>
+                        </div>
+                        <div style="padding: 20px;">
+                            <p>Xin chào <strong>${account.Name}</strong>,</p>
+                            <p>Chúc mừng! Bạn đã đăng ký thành công tài khoản tại thư viện. Dưới đây là thông tin chi tiết tài khoản của bạn:</p>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr><td style="padding: 8px;"><strong>Mã thẻ bạn đọc:</strong></td><td style="padding: 8px;">${account.LbCode}</td></tr>
+                                <tr><td style="padding: 8px;"><strong>Tên:</strong></td><td style="padding: 8px;">${account.Name}</td></tr>
+                                <tr><td style="padding: 8px;"><strong>Email:</strong></td><td style="padding: 8px;">${account.Email}</td></tr>
+                                <tr><td style="padding: 8px;"><strong>Số CCCD:</strong></td><td style="padding: 8px;">${account.CCCDNumber}</td></tr>
+                                <tr><td style="padding: 8px;"><strong>Số điện thoại:</strong></td><td style="padding: 8px;">${account.Phone}</td></tr>
+                                <tr><td style="padding: 8px;"><strong>Địa chỉ:</strong></td><td style="padding: 8px;">${account.Address}</td></tr>
+                                <tr><td style="padding: 8px;"><strong>Tuổi:</strong></td><td style="padding: 8px;">${account.Age}</td></tr>
+                                <tr><td style="padding: 8px;"><strong>Giới tính:</strong></td><td style="padding: 8px;">${account.Gender}</td></tr>
+                            </table>
+                            <p style="margin-top: 20px;">Vui lòng đăng nhập để sử dụng các dịch vụ của thư viện như tra cứu sách, mượn sách, và nhiều tiện ích khác.</p>
+                            <p style="margin-top: 10px;">Nếu bạn có bất kỳ câu hỏi hoặc cần hỗ trợ, đừng ngần ngại liên hệ với chúng tôi qua email hoặc số điện thoại hỗ trợ.</p>
+                        </div>
+                        <div style="background-color: #eeeeee; padding: 15px; text-align: center; font-size: 14px; color: #555;">
+                            📚 Thư viện BokStory - Luôn đồng hành cùng tri thức của bạn.<br>
+                            📧 Email: 4evershop4@gmail.com | ☎️ Hotline: 096 440 6858
+                        </div>
+                    </div>
+                </div>
             `,
-        };
+        };        
 
         await transporter.sendMail(mailOptions);
         console.log("📧 Email đã được gửi thành công!");
@@ -41,41 +55,42 @@ const sendAccountDetailsEmail = async (email, account) => {
     }
 };
 
-exports.confirmEmail = async (req, res) => {
+exports.confirmEmail = async (req, res) => { 
     const { token } = req.body;
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET); // Thay bằng khóa bí mật
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const account = await AccountModel.findOne({ _id: decoded.userId, Email: decoded.email });
 
         if (!account) {
             return res.status(400).json({
                 errCode: 1,
-                message: "Xác nhận không hợp lệ hoặc tài khoản không tồn tại.",
+                message: "❌ Xác nhận không hợp lệ hoặc tài khoản không tồn tại. Vui lòng kiểm tra lại liên kết xác nhận trong email của bạn.",
             });
         }
 
         if (account.State === "Active") {
             return res.status(200).json({
                 errCode: 0,
-                message: "Tài khoản đã được kích hoạt trước đó.",
+                message: "✅ Tài khoản của bạn đã được kích hoạt trước đó. Bạn có thể đăng nhập để sử dụng dịch vụ.",
             });
         }
 
         account.State = "Active";
         await account.save();
 
+        // Gửi email thông báo kích hoạt thành công
         await sendAccountDetailsEmail(account.Email, account);
 
         return res.status(200).json({
             errCode: 0,
-            message: "Tài khoản đã được kích hoạt thành công.",
+            message: "🎉 Tài khoản của bạn đã được kích hoạt thành công. Chúng tôi đã gửi thông tin chi tiết qua email!",
         });
     } catch (e) {
         console.error(e);
         return res.status(400).json({
             errCode: 1,
-            message: "Liên kết xác nhận không hợp lệ hoặc đã hết hạn.",
+            message: "❌ Liên kết xác nhận không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu gửi lại email xác nhận.",
         });
     }
 };

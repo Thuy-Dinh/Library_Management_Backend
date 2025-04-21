@@ -218,30 +218,35 @@ exports.getALoanSV = async (loanID) => {
     }
 };
 
+function getLibrarySignature() {
+    return `
+        <p style="margin-top: 30px; font-size: 14px; color: #555;">
+            —<br/>
+            <strong>📚 Thư viện Trường BokStory</strong><br/>
+            📧 Email: <a href="mailto:${process.env.EMAIL_USER}">${process.env.EMAIL_USER}</a><br/>
+            ☎️ Hotline: 096 440 6858<br/>
+            🌐 Truy cập website để biết thêm thông tin chi tiết.
+        </p>
+    `;
+}
+
 exports.acceptLoanSV = async (loanID, state) => {
     try {
-        // Tìm Loan và liên kết với Account thông qua AccountID
         const loan = await Loan.findOne({ _id: loanID }).populate({
-            path: "AccountID", // Liên kết với Account
-            select: "Email Name" // Chỉ lấy trường Email và Name từ Account
+            path: "AccountID",
+            select: "Email Name"
         }).populate({
-            path: "BookID", // Liên kết với Book
-            select: "Title" // Chỉ lấy tiêu đề sách
+            path: "BookID",
+            select: "Title"
         });
 
-        if (!loan) {
-            throw new Error("Loan không tồn tại");
-        }
+        if (!loan) throw new Error("Loan không tồn tại");
 
-        const userEmail = loan.AccountID.Email; // Lấy email từ Account
-        const userName = loan.AccountID.Name; // Lấy tên người dùng từ Account
-        const bookTitles = Array.isArray(loan.BookID) 
-            ? loan.BookID.map(book => book.Title).join(", ") 
+        const userEmail = loan.AccountID.Email;
+        const userName = loan.AccountID.Name;
+        const bookTitles = Array.isArray(loan.BookID)
+            ? loan.BookID.map(book => book.Title).join(", ")
             : loan.BookID.Title;
-
-        if (!userEmail) {
-            throw new Error("Không tìm thấy email người dùng");
-        }
 
         let emailSubject = "";
         let emailContent = "";
@@ -251,16 +256,11 @@ exports.acceptLoanSV = async (loanID, state) => {
 
             const oldDayStart = new Date(loan.DayStart);
             const oldDayEnd = new Date(loan.DayEnd);
-
-            if (!oldDayStart || !oldDayEnd || isNaN(oldDayStart) || isNaN(oldDayEnd)) {
-                throw new Error("Ngày bắt đầu hoặc kết thúc không hợp lệ");
-            }
-
             const diffTime = Math.abs(oldDayEnd - oldDayStart);
             const countDayBorrowed = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
             const nowUTC = new Date();
-            loan.DayStart = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000); // UTC+7
+            loan.DayStart = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000);
             loan.DayEnd = new Date(loan.DayStart);
             loan.DayEnd.setDate(loan.DayEnd.getDate() + countDayBorrowed);
 
@@ -271,14 +271,23 @@ exports.acceptLoanSV = async (loanID, state) => {
             await loan.save();
             await book.save();
 
-            emailSubject = "Đơn mượn sách của bạn đã được duyệt!";
+            emailSubject = "📘 Đơn mượn sách của bạn đã được duyệt!";
             emailContent = `
-                Chào ${userName},
-                Đơn mượn sách của bạn với tiêu đề "${bookTitles}" đã được duyệt.
-                Ngày bắt đầu: ${loan.DayStart.toLocaleDateString()}.
-                Ngày kết thúc: ${loan.DayEnd.toLocaleDateString()}.
-                Vui lòng đến thư viện trước ngày ${loan.DayStart.toLocaleDateString()} để nhận sách và đóng tiền cọc.
-                Chúc bạn đọc sách vui vẻ!
+                <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                    <h2 style="color: #2c3e50;">Xin chào ${userName},</h2>
+                    <p>🎉 Chúc mừng! Đơn mượn sách của bạn đã được <strong>duyệt thành công</strong>.</p>
+                    <p><strong>Thông tin mượn sách:</strong></p>
+                    <ul>
+                        <li><strong>Tựa sách:</strong> ${bookTitles}</li>
+                        <li><strong>Ngày bắt đầu:</strong> ${loan.DayStart.toLocaleDateString()}</li>
+                        <li><strong>Ngày kết thúc:</strong> ${loan.DayEnd.toLocaleDateString()}</li>
+                    </ul>
+                    <p>📌 Vui lòng đến <strong>Thư viện Trường BokStory</strong> <u>trước 17h ngày ${loan.DayStart.toLocaleDateString()}</u> để nhận sách và hoàn tất thủ tục đặt cọc.</p>
+                    <p>Nếu bạn không đến đúng hạn, đơn mượn có thể sẽ bị hủy tự động.</p>
+                    <p>Chúc bạn đọc sách vui vẻ và học tập hiệu quả!</p>
+                    <p style="margin-top: 20px;">Trân trọng,<br/>Ban quản lý Thư viện</p>
+                    ${getLibrarySignature()}
+                </div>
             `;
         } else if (state === "Từ chối") {
             loan.State = "Đã từ chối";
@@ -289,12 +298,16 @@ exports.acceptLoanSV = async (loanID, state) => {
             await loan.save();
             await book.save();
 
-            emailSubject = "Đơn mượn sách của bạn đã bị từ chối";
+            emailSubject = "📕 Đơn mượn sách đã bị từ chối";
             emailContent = `
-                Chào ${userName},
-                Rất tiếc, đơn mượn sách của bạn với tiêu đề "${bookTitles}" đã bị từ chối.
-                Vui lòng liên hệ quản lý thư viện qua email ${process.env.EMAIL_USER} nếu bạn có bất kỳ thắc mắc nào.
-                Xin cảm ơn!
+                <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                    <h2 style="color: #c0392b;">Xin chào ${userName},</h2>
+                    <p>Rất tiếc, đơn mượn sách của bạn với tiêu đề <strong>${bookTitles}</strong> đã bị từ chối.</p>
+                    <p>📝 Nếu bạn có bất kỳ thắc mắc nào hoặc muốn biết lý do từ chối, vui lòng liên hệ với thư viện qua địa chỉ email <a href="mailto:${process.env.EMAIL_USER}">${process.env.EMAIL_USER}</a>.</p>
+                    <p>Chúng tôi rất mong được hỗ trợ bạn trong những lần mượn tiếp theo.</p>
+                    <p style="margin-top: 20px;">Thân ái,<br/>Ban quản lý Thư viện</p>
+                    ${getLibrarySignature()}
+                </div>
             `;
         } else if (state === "Đang mượn") {
             loan.State = "Đã trả";
@@ -308,26 +321,34 @@ exports.acceptLoanSV = async (loanID, state) => {
             await loan.save();
             await book.save();
 
-            emailSubject = "Đơn mượn sách của bạn đã hoàn tất";
+            emailSubject = "✅ Đơn mượn sách đã hoàn tất";
             emailContent = `
-                Chào ${userName},
-                Đơn mượn sách của bạn với tiêu đề "${bookTitles}" đã hoàn tất.
-                Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.
+                <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                    <h2 style="color: #27ae60;">Xin chào ${userName},</h2>
+                    <p>🎉 Cảm ơn bạn đã trả lại sách đúng hạn. Đơn mượn sách của bạn với tiêu đề <strong>"${bookTitles}"</strong> đã được hoàn tất.</p>
+                    <p>Chúng tôi hy vọng tài liệu đã hỗ trợ tốt cho nhu cầu học tập hoặc nghiên cứu của bạn.</p>
+                    <p>📌 Đừng quên tiếp tục sử dụng các dịch vụ và nguồn tài liệu hữu ích khác từ Thư viện.</p>
+                    <p style="margin-top: 20px;">Thân ái,<br/>Ban quản lý Thư viện</p>
+                    ${getLibrarySignature()}
+                </div>
             `;
+        } else {
+            throw new Error("Trạng thái không hợp lệ");
         }
 
         const transporter = nodemailer.createTransport({
-            service: 'gmail', 
+            service: 'gmail',
             auth: {
-                user: process.env.EMAIL_USER, 
-                pass: process.env.GMAIL_APP_PASSWORD  
+                user: process.env.EMAIL_USER,
+                pass: process.env.GMAIL_APP_PASSWORD
             }
         });
-        
+
         await transporter.sendMail({
+            from: `"Thư viện Trường BokStory" <${process.env.EMAIL_USER}>`,
             to: userEmail,
             subject: emailSubject,
-            text: emailContent
+            html: emailContent
         });
 
         return loan;
@@ -355,4 +376,4 @@ exports.updateLoanById = async(id, { DayStart, DayEnd, State, Note, Payment, Met
   
     await loan.save();
     return loan;
-  }
+}
