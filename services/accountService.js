@@ -208,3 +208,11 @@ exports.limitedAccountSV = async (id, state) => {
 
     return user;
 };
+
+exports.updateUserSV = async (userCode, updatedData) => {
+    return await AccountModel.findOneAndUpdate(
+        { LbCode: userCode },
+        { $set: updatedData },
+        { new: true }
+    );
+};

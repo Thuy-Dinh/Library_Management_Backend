@@ -103,3 +103,20 @@ exports.acceptLoan = async (req, res) => {
         return res.status(500).json({ error: "Đã xảy ra lỗi trong hệ thống" });
     }
 }
+
+exports.updateLoan = async (req, res) => {
+    const { id } = req.params;
+    const payload = req.body;
+  
+    try {
+      const updated = await loanService.updateLoanById(id, payload);
+      res.status(200).json({
+        message: 'Cập nhật đơn mượn thành công!',
+        loan: updated
+      });
+    } catch (err) {
+      // Nếu service ném lỗi có statusCode, trả về lỗi thích hợp
+      const status = err.statusCode || 500;
+      res.status(status).json({ message: err.message });
+    }
+  };

@@ -6,7 +6,8 @@ const {
     confirmEmail,
     getAllUser,
     getAUser,
-    limitedAccount
+    limitedAccount,
+    updateUser
 } = require("../controllers/accountController");
 
 const router = express.Router();
@@ -18,6 +19,8 @@ router.get('/all-user', getAllUser);
 router.post('/get-user', getAUser);
 
 router.post('/limited', limitedAccount);
+
+router.post('/update-user/:userCode', updateUser);
 
 module.exports = router;
 

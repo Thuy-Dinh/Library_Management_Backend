@@ -5,7 +5,8 @@ const {
     createLoan, 
     getAllLoan, 
     getALoan,
-    acceptLoan
+    acceptLoan,
+    updateLoan
 } = require("../controllers/loanController");
 
 const router = express.Router();
@@ -20,5 +21,7 @@ router.post('/all-loan', getAllLoan)
 router.get('/loan-detail/:id', getALoan);
 
 router.post('/accept-loan', acceptLoan)
+
+router.post('/update-loan/:id', updateLoan);
 
 module.exports = router;

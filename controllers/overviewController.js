@@ -38,3 +38,26 @@ exports.countBorrowedByTime = async (req, res) => {
         res.status(500).json({ error: "Error retrieving borrowed books by time" });
     }
 };
+
+exports.getBorrowedByMonth = async (req, res) => {
+    const year = parseInt(req.query.year, 10);
+    console.log(year);
+    if (!year) return res.status(400).json({ error: 'Missing or invalid year' });
+  
+    try {
+      const data = await overViewService.getBorrowedBooksByMonth(year);
+      res.json(data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getDamagedBooksCount = async (req, res) => {
+    try {
+      const count = await overViewService.countDamagedBooks();
+      res.json({ damagedBooks: count });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+  

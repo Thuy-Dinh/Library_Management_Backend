@@ -72,6 +72,13 @@ const nodemailer = require("nodemailer");
 //     }
 // };
 
+const generateLoanCode = () => {
+    const now = new Date();
+    const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');  // Lấy ngày theo định dạng YYYYMMDD
+    const randomPart = Math.floor(Math.random() * 10000); // Tạo một số ngẫu nhiên từ 0 đến 9999
+    return `${datePart}-${randomPart}`;  // Kết hợp ngày với số ngẫu nhiên để tạo LoanCode
+};
+
 exports.createLoan = async (code, bookID, countDay, note, method, payment) => {
     try {
         const nowUTC = new Date();
@@ -115,6 +122,7 @@ exports.createLoan = async (code, bookID, countDay, note, method, payment) => {
 
             const loan = await Loan.create({
                 LoanID: newLoanID,
+                LoanCode: generateLoanCode(),
                 AccountID: userID,
                 BookID: [bookID], 
                 DayStart: dayStart,
@@ -139,13 +147,14 @@ exports.createLoan = async (code, bookID, countDay, note, method, payment) => {
 
             const loan = await Loan.create({
                 LoanID: newLoanID,
+                LoanCode: generateLoanCode(),
                 AccountID: userID,
                 BookID: bookList, 
                 DayStart: dayStart,
                 DayEnd: dayStart,
                 Method: "Mượn tại chỗ",
                 Payment: "Miễn phí",
-                Note: note,
+                Note: note || "",
                 State: "Đang mượn"
             });
 
@@ -326,3 +335,23 @@ exports.acceptLoanSV = async (loanID, state) => {
         throw err;
     }
 };
+
+exports.updateLoanById = async(id, { DayStart, DayEnd, State, Note, Payment, Method }) => {
+    const loan = await Loan.findById(id);
+    if (!loan) {
+      const err = new Error('Không tìm thấy đơn mượn');
+      err.statusCode = 404;
+      throw err;
+    }
+  
+    // Cập nhật các trường
+    loan.DayStart = DayStart;
+    loan.DayEnd   = DayEnd;
+    loan.State    = State;
+    loan.Note     = Note ?? loan.Note;
+    loan.Payment  = Payment;
+    loan.Method   = Method;
+  
+    await loan.save();
+    return loan;
+  }

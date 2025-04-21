@@ -75,6 +75,7 @@ exports.editBookSV = async ({
     edition,
     summary,
     language,
+    state,
     cover
 }) => {
     console.log(id,
@@ -86,7 +87,9 @@ exports.editBookSV = async ({
         publication_year,
         edition,
         summary,
-        language);
+        language,
+        state
+    );
     try {
         const updatedBook = await BookModel.findByIdAndUpdate(
             id, // ID sách
@@ -100,6 +103,7 @@ exports.editBookSV = async ({
                 Edition: edition, 
                 Summary: summary, 
                 Language: language,
+                Availability: state,
                 Cover: cover
             },
             { new: true } // Trả về tài liệu sau khi cập nhật
@@ -140,6 +144,11 @@ exports.getAllTopicSV = async () => {
         console.error("Error in getAllTopicSV:", error);
         throw error;
     }
+};
+
+exports.getCategoryById = async (id) => {
+    // Nếu id không hợp lệ (không phải ObjectId), Mongoose sẽ ném CastError
+    return await CategoryModel.findById(id).lean();
 };
 
 exports.createTopicSV = async (topicData) => {
@@ -194,14 +203,16 @@ exports.searchSuggestionSV = async (keyword) => {
 
         // Lọc kết quả sau khi populate
         const filteredSuggestions = suggestions.filter((book) => {
+            const codeMatch = book.BookCode?.toLowerCase().includes(keyword.toLowerCase());
             const titleMatch = book.Title?.toLowerCase().includes(keyword.toLowerCase());
             const authorMatch = book.Author?.toLowerCase().includes(keyword.toLowerCase());
             const categoryMatch = book.Category?.Name?.toLowerCase().includes(keyword.toLowerCase());
 
-            return titleMatch || authorMatch || categoryMatch;
+            return codeMatch || titleMatch || authorMatch || categoryMatch;
         });
 
         return filteredSuggestions.map((book) => ({
+            Code: book.BookCode,
             Title: book.Title,
             Author: book.Author,
             Category: book.Category?.Name || null,

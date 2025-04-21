@@ -10,11 +10,12 @@ const {
     editBook, 
     deleteBook,
     getAllTopic,
+    getCategory,
     createTopic,
     searchByCategory,
     searchSuggestion,
     searchResult,
-    searchBookByOtherField
+    searchBookByOtherField,
 } = require("../controllers/bookController");
 
 const router = express.Router();
@@ -31,6 +32,8 @@ router.post('/update-book/:id', editBook);
 router.get('/delete-book/:bookID', deleteBook);
 
 router.get('/all-topic', getAllTopic);
+router.get('/categories/:id', getCategory);
+
 router.get('/topic-books', searchByCategory);
 router.get('/search-suggestions', searchSuggestion);
 router.get('/search-result', searchResult);

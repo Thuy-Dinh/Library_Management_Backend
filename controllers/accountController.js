@@ -228,3 +228,19 @@ exports.limitedAccount = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.updateUser = async (req, res) => {
+    const { userCode } = req.params;
+    const updatedData = req.body;
+
+    try {
+        const user = await accountService.updateUserSV(userCode, updatedData);
+        if (!user) {
+            return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+        }
+        res.json({ message: 'Cập nhật thành công', user });
+    } catch (err) {
+        console.error('Lỗi cập nhật:', err.message);
+        res.status(500).json({ message: 'Lỗi server khi cập nhật người dùng' });
+    }
+};

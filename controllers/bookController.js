@@ -66,6 +66,8 @@ exports.proposeBook = async (req, res) => {
         if (!bookProposes) {
             return res.status(404).json({ message: `Không tìm thấy sách với ID ${bookID}`, status: "error" });
         }
+        
+        console.log(bookProposes);
 
         return res.status(200).json({ bookProposes });
     } catch (err) {
@@ -175,6 +177,7 @@ exports.editBook = async (req, res) => {
             edition, 
             summary, 
             language,
+            state,
             cover
         } = req.body;
 
@@ -189,7 +192,8 @@ exports.editBook = async (req, res) => {
             edition,
             summary,
             language,
-            cover,
+            state,
+            cover
         });
 
         if (!updatedBook) {
@@ -270,6 +274,20 @@ exports.createTopic = async (req, res) => {
     }
 };
 
+exports.getCategory = async (req, res) => {
+    const { id } = req.params;
+    try {
+      const category = await bookService.getCategoryById(id);
+      if (!category) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy chuyên mục' });
+      }
+      res.json({ success: true, data: category });
+    } catch (err) {
+      console.error('Lỗi getCategory:', err);
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+};
+
 exports.searchByCategory = async (req, res) => {
     try {
         console.log(req.query);
@@ -303,6 +321,7 @@ exports.searchSuggestion = async (req, res) => {
         }
 
         const results = await bookService.searchSuggestionSV(keyword);
+        console.log(results);
 
         return res.status(200).json({ success: true, data: results });
     } catch (error) {
@@ -338,4 +357,4 @@ exports.searchBookByOtherField = async (req, res) => {
         console.error('Search error:', error);
         return res.status(500).json({ message: 'Lỗi tìm kiếm sách', error });
     }
-  };
+};

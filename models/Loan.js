@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const LoanSchema = new mongoose.Schema({
     LoanID: { type: Number, required: true },
+    LoanCode: String,
     AccountID: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Account', 
