@@ -84,7 +84,7 @@ exports.confirmEmail = async (req, res) => {
 
         return res.status(200).json({
             errCode: 0,
-            message: "🎉 Tài khoản của bạn đã được kích hoạt thành công. Chúng tôi đã gửi thông tin chi tiết qua email!",
+            message: "🎉 Tài khoản của bạn đã được kích hoạt thành công. Chúng tôi đã gửi thông tin tài khoản chi tiết qua email!",
         });
     } catch (e) {
         console.error(e);

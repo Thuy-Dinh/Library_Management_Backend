@@ -103,9 +103,9 @@ function generateBookCode(book) {
         .join("");
     };
     return `${getAcronym(book.Title)}${book.Publication_year}`;
-  }
+}
   
-  exports.createBook = async (req, res) => {
+exports.createBook = async (req, res) => {
     try {
       const {
         title,

@@ -264,6 +264,7 @@ exports.searchBookByOtherFieldSV = async (params) => {
         { Title: { $regex: keyword, $options: 'i' } },
         { Author: { $regex: keyword, $options: 'i' } },
         { Publisher: { $regex: keyword, $options: 'i' } },
+        { Subcategory: { $regex: keyword, $options: 'i' } },
         { Tag: { $regex: keyword, $options: 'i' } },
         { Summary: { $regex: keyword, $options: 'i' } }
       ];
