@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const BookModel = require("../models/Book");
 const CategoryModel = require("../models/Category");
+const Area = require("../models/Area")
 
 exports.bookDetailSV = async (bookID) => {
     const bookIdsArray = bookID.includes(",") ? bookID.split(",") : [bookID]; // Chuyển thành mảng
@@ -282,12 +283,9 @@ exports.searchBookByOtherFieldSV = async (params) => {
 
 exports.getAllAreas = async () => {
     try {
-        // Lấy tất cả sách và lọc các khu vực duy nhất
-        const books = await BookModel.find({});
-        const areas = books.map(book => book.Location?.area).filter(Boolean);
-        const uniqueAreas = [...new Set(areas)];
-        return uniqueAreas;
-    } catch (error) {
-        throw new Error('Lỗi khi lấy khu vực');
+      const areas = await Area.find().populate("Topics").lean();
+      return areas;
+    } catch (err) {
+      throw new Error("Không thể lấy danh sách khu vực");
     }
-};
+  };

@@ -276,6 +276,7 @@ exports.getAllTopic = async (req, res) => {
                 const cover = books.length > 0 ? books[0].Cover : null;
 
                 return {
+                    id: topic._id,
                     topic: topic.Name,  // Hoặc tên topic tùy vào cấu trúc của bạn
                     cover: cover        // Chỉ trả về cover của quyển sách đầu tiên
                 };
@@ -395,10 +396,10 @@ exports.searchBookByOtherField = async (req, res) => {
 
 exports.getAllAreas = async (req, res) => {
     try {
-        const areas = await bookService.getAllAreas();
-        res.json({ areas });
-    } catch (error) {
-        console.error('Lỗi khi lấy khu vực:', error);
-        res.status(500).json({ message: 'Có lỗi xảy ra khi lấy khu vực.' });
+      const areas = await bookService.getAllAreas();
+      res.status(200).json({ areas });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Lỗi server khi lấy khu vực" });
     }
-};
+  };
