@@ -402,4 +402,31 @@ exports.getAllAreas = async (req, res) => {
       console.error(err);
       res.status(500).json({ error: "Lỗi server khi lấy khu vực" });
     }
-  };
+};
+
+exports.recommendBooks = async (req, res) => {
+    try {
+      const { accountId } = req.params;
+      const result = await bookService.getRecommendedBooks(accountId);
+      res.json(result);
+    } catch (error) {
+      console.error('Recommend error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.addReview = async (req, res) => {
+    try {
+        const { bookId } = req.params;
+        const { userId, rating, comment } = req.body;
+
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ message: 'Rating phải từ 1 đến 5' });
+        }
+
+        const book = await bookService.addBookReview(bookId, userId, rating, comment);
+        res.status(200).json({ message: 'Đánh giá thành công', book });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};

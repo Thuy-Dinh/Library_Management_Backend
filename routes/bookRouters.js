@@ -16,7 +16,9 @@ const {
     searchSuggestion,
     searchResult,
     searchBookByOtherField,
-    getAllAreas
+    getAllAreas,
+    recommendBooks,
+    addReview
 } = require("../controllers/bookController");
 
 const router = express.Router();
@@ -43,6 +45,10 @@ router.get('/search', searchBookByOtherField);
 router.post('/create-topic', createTopic);
 
 router.get('/areas', getAllAreas);
+
+router.get('/recommend/:accountId', recommendBooks);
+
+router.post('/:bookId/review', addReview);
 
 module.exports = router;
 

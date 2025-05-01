@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
+const Account = require("../models/Account");
 const BookModel = require("../models/Book");
+const Loan = require("../models/Loan")
 const CategoryModel = require("../models/Category");
 const Area = require("../models/Area")
 
@@ -288,4 +290,123 @@ exports.getAllAreas = async () => {
     } catch (err) {
       throw new Error("Không thể lấy danh sách khu vực");
     }
+};
+
+exports.getAgeGroup = (birthDate) => {
+    const age = new Date().getFullYear() - new Date(birthDate).getFullYear();
+    if (age <= 12) return 'children';
+    if (age <= 17) return 'teen';
+    if (age <= 50) return 'adult';
+    return 'senior';
   };
+  
+const getBooksByAgeGroup = async (group) => {
+    switch (group) {
+      case 'children':
+        return await BookModel.find({
+          $or: [
+            { Tag: /thiếu nhi/i },
+            { Subcategory: /thiếu nhi|truyện tranh/i }
+          ]
+        }).limit(10);
+      case 'teen':
+        return await BookModel.find({
+          $or: [
+            { Tag: /tuổi teen|kỹ năng sống/i },
+            { Subcategory: /giáo dục tuổi teen/i }
+          ]
+        }).limit(10);
+      case 'adult':
+        return await BookModel.find({
+          $or: [
+            { Tag: /tiểu thuyết|phát triển bản thân/i },
+            { Subcategory: /văn học|học thuật|kỹ năng/i }
+          ]
+        }).limit(10);
+      case 'senior':
+        return await BookModel.find({
+          $or: [
+            { Tag: /sức khỏe|hồi ký|lịch sử/i },
+            { Subcategory: /văn hóa|truyền thống/i }
+          ]
+        }).limit(10);
+      default:
+        return [];
+    }
+};
+  
+exports.getRecommendedBooks = async (accountId) => {
+    const userLoans = await Loan.find({ AccountID: accountId }).populate('BookID');
+  
+    if (userLoans.length === 0) {
+      const user = await Account.findById(accountId);
+      if (!user || !user.Age) {
+        return {
+          type: 'popular',
+          books: await BookModel.find().sort({ CountBorrow: -1 }).limit(10)
+        };
+      }
+  
+      const group = getAgeGroup(user.Age);
+      const books = await getBooksByAgeGroup(group);
+      return { type: 'age-based', ageGroup: group, books };
+    }
+  
+    // Tính toán theo lịch sử mượn
+    const preferences = {
+      categories: new Set(),
+      tags: new Set(),
+      authors: new Set(),
+      bookIds: new Set()
+    };
+  
+    userLoans.forEach(loan => {
+      loan.BookID.forEach(book => {
+        if (book.Category) preferences.categories.add(book.Category.toString());
+        if (book.Tag) preferences.tags.add(book.Tag);
+        if (book.Author) preferences.authors.add(book.Author);
+        preferences.bookIds.add(book._id.toString());
+      });
+    });
+  
+    const recommendedBooks = await BookModel.find({
+      $and: [
+        {
+          $or: [
+            { Category: { $in: Array.from(preferences.categories) } },
+            { Tag: { $in: Array.from(preferences.tags) } },
+            { Author: { $in: Array.from(preferences.authors) } }
+          ]
+        },
+        { _id: { $nin: Array.from(preferences.bookIds) } }
+      ]
+    })
+    .limit(10)
+    .populate('Category');
+  
+    return { type: 'personalized', books: recommendedBooks };
+};
+
+exports.addBookReview = async (bookId, userId, rating, comment) => {
+  const book = await BookModel.findById(bookId);
+  if (!book) throw new Error('Không tìm thấy sách');
+
+  const alreadyReviewed = book.reviews.find(
+      (r) => r.user.toString() === userId.toString()
+  );
+  if (alreadyReviewed) throw new Error('Bạn đã đánh giá sách này rồi');
+
+  book.reviews.push({
+      user: userId,
+      rating,
+      comment
+  });
+
+  // Cập nhật điểm trung bình
+  book.Rating = Number(
+    (book.reviews.reduce((sum, r) => sum + r.rating, 0) / book.reviews.length).toFixed(1)
+  );  
+
+  await book.save();
+  return book;
+};
