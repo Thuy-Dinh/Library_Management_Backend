@@ -31,7 +31,7 @@ const sendConfirmationEmail = async (email) => {
         },
     });
 
-    const url = "http://localhost:3000/confirm";
+    const url = "https://library-management-e8767.web.app/confirm";
     await transporter.sendMail({
         from: `"Thư viện BokStory" <${process.env.EMAIL_USER}>`,
         to: email,
